@@ -1,0 +1,1634 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Trening">
+<meta name="theme-color" content="#0d0d0e">
+<title>Performance System</title>
+<style>
+:root{
+  --bg:#0d0d0e;--bg2:#141416;--bg3:#1e1e21;
+  --border:#252528;--border2:#303035;
+  --accent:#ff6b35;--accent-dim:rgba(255,107,53,0.1);
+  --text:#e8e6e2;--text2:#9b9896;--text3:#5a5855;
+  --green:#4ade80;--blue:#60a5fa;--yellow:#fbbf24;
+  --purple:#a78bfa;--red:#f87171;--teal:#2dd4bf;
+  --r:10px;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{scroll-behavior:smooth}
+body{
+  background:var(--bg);color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  font-size:15px;line-height:1.6;
+  padding-bottom:calc(70px + env(safe-area-inset-bottom));
+  min-height:100vh;
+}
+
+/* ─── HEADER ─── */
+.hdr{
+  position:sticky;top:0;z-index:200;
+  background:rgba(13,13,14,0.97);
+  backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+  border-bottom:1px solid var(--border);
+}
+.hdr-top{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:14px 16px 10px;
+}
+.hdr-title{
+  font-size:20px;font-weight:700;letter-spacing:-0.02em;
+  color:var(--text);
+}
+.hdr-title span{color:var(--accent)}
+.cfg-toggle{
+  background:var(--bg3);border:1px solid var(--border2);
+  color:var(--text2);font-size:12px;padding:7px 14px;
+  border-radius:20px;cursor:pointer;display:flex;align-items:center;gap:6px;
+  transition:all 0.2s;
+}
+.cfg-toggle:active{transform:scale(0.96)}
+.cfg-toggle.open{color:var(--accent);border-color:rgba(255,107,53,0.4)}
+
+/* ─── CONFIG PANEL ─── */
+.cfg-panel{
+  max-height:0;overflow:hidden;
+  transition:max-height 0.35s ease;
+  background:var(--bg2);border-bottom:1px solid var(--border);
+}
+.cfg-panel.open{max-height:400px}
+.cfg-inner{padding:16px}
+.cfg-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.cfg-field label{
+  display:block;font-size:10px;letter-spacing:0.15em;
+  text-transform:uppercase;color:var(--text3);margin-bottom:5px;
+}
+.cfg-field input{
+  width:100%;background:var(--bg3);border:1px solid var(--border2);
+  color:var(--text);font-size:15px;padding:9px 12px;
+  border-radius:8px;outline:none;
+  transition:border-color 0.2s;
+  -webkit-appearance:none;
+}
+.cfg-field input:focus{border-color:var(--accent)}
+.cfg-results{
+  display:grid;grid-template-columns:repeat(4,1fr);gap:6px;
+}
+.cfg-stat{
+  background:var(--bg3);border-radius:8px;padding:10px 8px;text-align:center;
+}
+.cfg-stat-val{
+  font-size:18px;font-weight:700;color:var(--accent);
+  display:block;line-height:1;margin-bottom:3px;
+}
+.cfg-stat-lbl{font-size:9px;letter-spacing:0.1em;text-transform:uppercase;color:var(--text3)}
+.cfg-note{font-size:11px;color:var(--text3);margin-top:12px;text-align:center;line-height:1.6}
+
+/* ─── TOP NAV (desktop) ─── */
+.top-nav{
+  display:none;overflow-x:auto;scrollbar-width:none;
+  border-bottom:1px solid var(--border);
+  background:rgba(13,13,14,0.97);
+}
+.top-nav::-webkit-scrollbar{display:none}
+@media(min-width:768px){
+  .top-nav{display:flex}
+  .bottom-nav{display:none!important}
+  body{padding-bottom:0}
+}
+.top-nav-btn{
+  font-size:11px;letter-spacing:0.15em;text-transform:uppercase;
+  padding:12px 20px;background:none;border:none;color:var(--text3);
+  cursor:pointer;white-space:nowrap;border-bottom:2px solid transparent;
+  transition:all 0.2s;
+}
+.top-nav-btn:hover{color:var(--text2)}
+.top-nav-btn.active{color:var(--accent);border-bottom-color:var(--accent)}
+
+/* ─── BOTTOM NAV (mobile) ─── */
+.bottom-nav{
+  position:fixed;bottom:0;left:0;right:0;z-index:200;
+  background:rgba(20,20,22,0.98);
+  backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+  border-top:1px solid var(--border);
+  display:flex;
+  padding-bottom:env(safe-area-inset-bottom);
+}
+.bnav-btn{
+  flex:1;display:flex;flex-direction:column;align-items:center;
+  gap:3px;padding:10px 4px 8px;
+  background:none;border:none;color:var(--text3);
+  cursor:pointer;transition:color 0.2s;font-size:10px;
+  letter-spacing:0.05em;
+}
+.bnav-btn.active{color:var(--accent)}
+.bnav-icon{font-size:20px;line-height:1}
+
+/* ─── SECTIONS ─── */
+.section{display:none;padding:20px 16px 24px;animation:fadeUp 0.3s ease}
+.section.active{display:block}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+/* ─── TYPOGRAPHY ─── */
+.sec-title{
+  font-size:clamp(24px,5vw,36px);font-weight:700;
+  letter-spacing:-0.02em;margin-bottom:2px;
+}
+.sec-title span{color:var(--accent)}
+.sec-sub{
+  font-size:11px;letter-spacing:0.2em;color:var(--text3);
+  text-transform:uppercase;margin-bottom:24px;
+}
+h3{font-size:18px;font-weight:600;letter-spacing:-0.01em;margin-bottom:12px;color:var(--text)}
+h4{font-size:10px;letter-spacing:0.2em;text-transform:uppercase;color:var(--accent);margin-bottom:8px}
+
+/* ─── CARDS ─── */
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:16px}
+.card+.card{margin-top:2px}
+.card-accent{border-left:3px solid var(--accent)}
+
+/* ─── GRID ─── */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+@media(max-width:480px){.g3{grid-template-columns:1fr 1fr}}
+@media(max-width:360px){.g2,.g3{grid-template-columns:1fr}}
+
+/* ─── WEEK GRID ─── */
+.week-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:24px}
+@media(max-width:640px){.week-grid{grid-template-columns:repeat(4,1fr)}}
+@media(max-width:380px){.week-grid{grid-template-columns:repeat(2,1fr)}}
+.day-card{
+  background:var(--bg2);border:1px solid var(--border);
+  border-radius:8px;padding:10px 8px;position:relative;cursor:default;
+}
+.day-card.key{border-color:rgba(255,107,53,0.5)}
+.day-card.key::after{
+  content:'KEY';position:absolute;top:6px;right:6px;
+  font-size:8px;letter-spacing:0.1em;background:var(--accent);
+  color:#000;padding:1px 4px;font-weight:700;border-radius:2px;
+}
+.day-card.rest{opacity:0.55}
+.day-name{font-size:9px;letter-spacing:0.15em;text-transform:uppercase;color:var(--text3);margin-bottom:4px}
+.day-type{font-size:13px;font-weight:700;line-height:1.2;margin-bottom:4px}
+.day-time{font-size:9px;color:var(--accent);margin-bottom:6px}
+.day-tags{display:flex;flex-wrap:wrap;gap:3px}
+.tag{
+  font-size:9px;letter-spacing:0.08em;padding:2px 5px;
+  border:1px solid;border-radius:3px;text-transform:uppercase;
+}
+.t-o{border-color:rgba(255,107,53,0.35);color:var(--accent)}
+.t-b{border-color:rgba(96,165,250,0.35);color:var(--blue)}
+.t-g{border-color:rgba(74,222,128,0.35);color:var(--green)}
+.t-y{border-color:rgba(251,191,36,0.35);color:var(--yellow)}
+.t-p{border-color:rgba(167,139,250,0.35);color:var(--purple)}
+.t-r{border-color:rgba(248,113,113,0.35);color:var(--red)}
+.t-t{border-color:rgba(45,212,191,0.35);color:var(--teal)}
+
+/* ─── SUB-TABS ─── */
+.sub-tabs{
+  display:flex;gap:0;overflow-x:auto;scrollbar-width:none;
+  border-bottom:1px solid var(--border);margin-bottom:20px;
+  position:sticky;top:0;background:var(--bg);z-index:10;padding-top:4px;
+}
+.sub-tabs::-webkit-scrollbar{display:none}
+.sub-btn{
+  font-size:11px;letter-spacing:0.12em;text-transform:uppercase;
+  padding:10px 16px;background:none;border:none;color:var(--text3);
+  cursor:pointer;white-space:nowrap;border-bottom:2px solid transparent;
+  transition:all 0.2s;
+}
+.sub-btn:hover{color:var(--text2)}
+.sub-btn.active{color:var(--accent);border-bottom-color:var(--accent)}
+.sub-section{display:none}
+.sub-section.active{display:block;animation:fadeUp 0.25s ease}
+
+/* ─── EXERCISE CARDS (mobile-first) ─── */
+.ex-block{margin-bottom:28px}
+.ex-block-title{
+  font-size:16px;font-weight:700;letter-spacing:-0.01em;
+  display:flex;align-items:center;gap:10px;
+  padding:12px 0 10px;border-bottom:1px solid var(--border);margin-bottom:12px;
+}
+.ex-block-dot{width:8px;height:8px;background:var(--accent);flex-shrink:0}
+.ex-block-meta{font-size:10px;color:var(--text3);margin-left:auto}
+.ex-card{
+  background:var(--bg2);border:1px solid var(--border);
+  border-radius:var(--r);padding:14px;margin-bottom:6px;
+}
+.ex-num{
+  font-size:9px;letter-spacing:0.15em;color:var(--text3);
+  text-transform:uppercase;margin-bottom:4px;
+}
+.ex-name{font-size:15px;font-weight:600;margin-bottom:6px;color:var(--text)}
+.ex-row{
+  display:flex;flex-wrap:wrap;gap:8px;margin-bottom:8px;
+}
+.ex-badge{
+  background:var(--bg3);border-radius:6px;padding:5px 10px;
+  font-size:12px;
+}
+.ex-badge span{color:var(--text3);font-size:10px}
+.ex-sets{font-weight:700;color:var(--accent)}
+.ex-rpe-h{color:var(--red)}
+.ex-rpe-m{color:var(--yellow)}
+.ex-rpe-l{color:var(--green)}
+.ex-note{font-size:12px;color:var(--text2);line-height:1.65;border-top:1px solid var(--border);padding-top:8px;margin-top:4px}
+
+/* ─── NOTES ─── */
+.sci-note{
+  background:rgba(96,165,250,0.06);border:1px solid rgba(96,165,250,0.2);
+  border-left:3px solid var(--blue);border-radius:0 var(--r) var(--r) 0;
+  padding:12px 14px;margin:14px 0;font-size:12px;color:var(--text2);line-height:1.7;
+}
+.sci-note strong{color:var(--blue)}
+.warn-note{
+  background:var(--accent-dim);border:1px solid rgba(255,107,53,0.25);
+  border-left:3px solid var(--accent);border-radius:0 var(--r) var(--r) 0;
+  padding:12px 14px;margin:14px 0;font-size:12px;color:var(--text2);line-height:1.7;
+}
+.warn-note strong{color:var(--accent)}
+
+/* ─── MOBILITY ─── */
+.mob-card{
+  background:var(--bg2);border:1px solid var(--border);
+  border-radius:var(--r);overflow:hidden;margin-bottom:6px;
+}
+.mob-hdr{
+  display:flex;align-items:center;gap:10px;
+  padding:12px 14px;border-bottom:1px solid var(--border);
+}
+.mob-phase{
+  font-size:9px;letter-spacing:0.15em;text-transform:uppercase;
+  color:var(--accent);background:var(--accent-dim);
+  padding:4px 8px;border-radius:4px;white-space:nowrap;
+}
+.mob-time-badge{font-size:10px;color:var(--text3);margin-left:auto}
+.mob-body{padding:12px 14px}
+.mob-title{font-size:14px;font-weight:600;margin-bottom:4px}
+.mob-desc{font-size:12px;color:var(--text2);line-height:1.7}
+
+/* ─── NUTRITION ─── */
+.macro-row{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.macro-lbl{font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--text3);width:60px}
+.macro-track{flex:1;height:5px;background:var(--border);border-radius:3px;overflow:hidden;position:relative}
+.macro-fill{height:100%;border-radius:3px;position:absolute;left:0;top:0}
+.macro-val{font-size:11px;color:var(--text);width:52px;text-align:right;font-variant-numeric:tabular-nums}
+
+.meal-card{
+  background:var(--bg2);border:1px solid var(--border);
+  border-radius:var(--r);padding:16px;margin-bottom:8px;
+  position:relative;
+}
+.meal-flag{font-size:22px;margin-bottom:8px;display:block}
+.meal-time{font-size:10px;letter-spacing:0.15em;text-transform:uppercase;color:var(--accent);margin-bottom:4px}
+.meal-name{font-size:18px;font-weight:700;letter-spacing:-0.01em;margin-bottom:10px}
+.meal-macros{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:10px}
+.m-badge{font-size:12px}
+.m-badge .v{font-weight:700}
+.m-badge .u{color:var(--text3);font-size:10px}
+.mb-p .v{color:var(--blue)}
+.mb-c .v{color:var(--yellow)}
+.mb-f .v{color:var(--accent)}
+.mb-k .v{color:var(--green)}
+.meal-content{font-size:13px;color:var(--text2);line-height:1.75}
+.meal-content strong{color:var(--text);font-weight:500}
+.meal-tip{
+  margin-top:10px;font-size:11px;color:var(--teal);
+  border-top:1px solid var(--border);padding-top:8px;
+}
+
+/* ─── SHOPPING LIST ─── */
+.shop-cat-title{
+  font-size:10px;letter-spacing:0.2em;text-transform:uppercase;
+  color:var(--accent);margin:16px 0 8px;
+}
+.shop-item-row{
+  display:flex;align-items:center;gap:12px;
+  padding:12px 14px;background:var(--bg2);border:1px solid var(--border);
+  border-radius:8px;margin-bottom:4px;cursor:pointer;
+  transition:background 0.15s;
+}
+.shop-item-row:active{background:var(--bg3)}
+.shop-item-row input[type=checkbox]{
+  width:20px;height:20px;accent-color:var(--accent);
+  flex-shrink:0;cursor:pointer;
+}
+.shop-item-name{flex:1;font-size:14px}
+.shop-item-detail{font-size:12px;color:var(--text3)}
+.shop-item-row.checked .shop-item-name{
+  text-decoration:line-through;color:var(--text3);
+}
+.share-btn{
+  width:100%;padding:15px;border-radius:var(--r);
+  background:var(--accent);color:#000;font-size:15px;
+  font-weight:700;border:none;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  margin-top:16px;transition:all 0.2s;letter-spacing:-0.01em;
+}
+.share-btn:active{transform:scale(0.98);background:#e55a28}
+.shop-actions{display:flex;gap:8px;margin-bottom:4px}
+.shop-action-btn{
+  flex:1;padding:11px;border-radius:8px;font-size:13px;
+  background:var(--bg2);border:1px solid var(--border2);
+  color:var(--text2);cursor:pointer;transition:all 0.2s;
+}
+.shop-action-btn:active{background:var(--bg3)}
+
+/* ─── PROGRESSION ─── */
+.rpe-grid{display:grid;grid-template-columns:repeat(8,1fr);gap:3px;margin:16px 0}
+@media(max-width:480px){.rpe-grid{grid-template-columns:repeat(4,1fr)}}
+.rpe-blk{
+  background:var(--bg2);border:1px solid var(--border);
+  border-radius:6px;padding:10px 4px;text-align:center;
+}
+.rpe-num{font-size:16px;font-weight:700;display:block;margin-bottom:3px}
+.rpe-lbl{font-size:9px;color:var(--text3);line-height:1.4}
+.wave-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;margin:16px 0}
+@media(max-width:480px){.wave-grid{grid-template-columns:repeat(2,1fr)}}
+.wave-card{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:14px;text-align:center}
+.wave-card.deload{opacity:0.45}
+.wave-num{font-size:9px;letter-spacing:0.2em;text-transform:uppercase;color:var(--text3);margin-bottom:4px}
+.wave-type{font-size:16px;font-weight:700;margin-bottom:6px}
+.wave-detail{font-size:11px;color:var(--text2);line-height:1.6}
+.wave-bar{height:3px;background:var(--accent);border-radius:2px;margin-top:10px}
+.rule-row{display:flex;gap:10px;margin-bottom:10px;font-size:13px;line-height:1.65}
+.rule-icon{color:var(--accent);flex-shrink:0;font-size:11px;padding-top:2px}
+
+/* ─── BENCH TABLE ─── */
+.bench-table{width:100%;border-collapse:collapse;font-size:13px}
+.bench-table th{
+  font-size:9px;letter-spacing:0.15em;text-transform:uppercase;
+  color:var(--accent);text-align:left;padding:8px 10px;
+  border-bottom:1px solid var(--border);font-weight:400;
+}
+.bench-table td{
+  padding:10px 10px;border-bottom:1px solid rgba(37,37,40,0.7);
+  color:var(--text);
+}
+.bench-table tr:hover td{background:rgba(255,107,53,0.03)}
+@media(max-width:600px){
+  .bench-table{display:block;overflow-x:auto;white-space:nowrap;
+    -webkit-overflow-scrolling:touch}
+}
+
+/* ─── DIVIDER ─── */
+.divider{border:none;border-top:1px solid var(--border);margin:20px 0}
+
+/* ─── PROGRESS INSTALL BANNER ─── */
+.install-banner{
+  background:var(--bg2);border:1px solid rgba(255,107,53,0.3);
+  border-radius:var(--r);padding:14px;margin-bottom:16px;
+  display:flex;align-items:flex-start;gap:12px;
+}
+.install-icon{font-size:24px;flex-shrink:0;margin-top:2px}
+.install-text{font-size:12px;color:var(--text2);line-height:1.7}
+.install-text strong{color:var(--text);display:block;margin-bottom:2px}
+.install-close{
+  margin-left:auto;background:none;border:none;color:var(--text3);
+  font-size:18px;cursor:pointer;padding:2px 6px;flex-shrink:0;
+}
+
+/* ─── SUPP TABLE ─── */
+.supp-card{
+  display:flex;align-items:flex-start;gap:12px;
+  background:var(--bg2);border:1px solid var(--border);
+  border-radius:var(--r);padding:14px;margin-bottom:6px;
+}
+.supp-grade{
+  font-size:10px;letter-spacing:0.1em;padding:3px 8px;
+  border-radius:4px;font-weight:700;white-space:nowrap;flex-shrink:0;
+}
+.grade-a{background:rgba(74,222,128,0.15);color:var(--green)}
+.grade-b{background:rgba(96,165,250,0.15);color:var(--blue)}
+.supp-body{}
+.supp-name{font-size:14px;font-weight:600;margin-bottom:3px}
+.supp-desc{font-size:12px;color:var(--text2);line-height:1.65}
+
+/* ─── STAT PILLS ─── */
+.stat-pills{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:20px}
+.stat-pill{
+  background:var(--bg2);border:1px solid var(--border);
+  border-radius:20px;padding:6px 14px;
+  display:flex;align-items:center;gap:6px;
+}
+.stat-pill-val{font-size:15px;font-weight:700;color:var(--accent)}
+.stat-pill-lbl{font-size:11px;color:var(--text3)}
+</style>
+</head>
+<body>
+
+<!-- ═══ HEADER ═══ -->
+<div class="hdr">
+  <div class="hdr-top">
+    <div class="hdr-title">PERFORMANCE <span>SYS</span></div>
+    <button class="cfg-toggle" id="cfgToggle" onclick="toggleCfg()">
+      <span>⚙️</span> <span id="cfgLabel">Moje dane</span>
+    </button>
+  </div>
+
+  <!-- CONFIG PANEL -->
+  <div class="cfg-panel" id="cfgPanel">
+    <div class="cfg-inner">
+      <div class="cfg-grid">
+        <div class="cfg-field">
+          <label>Waga ciała (kg)</label>
+          <input type="number" id="cfgWeight" value="78" min="50" max="150" step="0.5" oninput="recalc()">
+        </div>
+        <div class="cfg-field">
+          <label>Bench 1RM (kg)</label>
+          <input type="number" id="cfgBench" value="85" min="20" max="300" step="2.5" oninput="recalc()">
+        </div>
+        <div class="cfg-field">
+          <label>Kcal trening</label>
+          <input type="number" id="cfgKcalTrain" value="2580" min="1500" max="5000" step="50" oninput="recalc()">
+        </div>
+        <div class="cfg-field">
+          <label>Kcal odpoczynek</label>
+          <input type="number" id="cfgKcalRest" value="2220" min="1200" max="4000" step="50" oninput="recalc()">
+        </div>
+      </div>
+      <div class="cfg-results">
+        <div class="cfg-stat"><span class="cfg-stat-val" id="r-protein">155</span><span class="cfg-stat-lbl">Białko g</span></div>
+        <div class="cfg-stat"><span class="cfg-stat-val" id="r-carbs-t">305</span><span class="cfg-stat-lbl">Węgle trening</span></div>
+        <div class="cfg-stat"><span class="cfg-stat-val" id="r-carbs-r">215</span><span class="cfg-stat-lbl">Węgle odpoczynek</span></div>
+        <div class="cfg-stat"><span class="cfg-stat-val" id="r-bench-w">66</span><span class="cfg-stat-lbl">Bench work kg</span></div>
+      </div>
+      <div class="cfg-note">Białko = waga × 2.0g/kg · Bench roboczy = 78% 1RM · Tłuszcze stałe ~77g</div>
+    </div>
+  </div>
+
+  <!-- TOP NAV (desktop) -->
+  <nav class="top-nav" id="topNav">
+    <button class="top-nav-btn active" onclick="showSection('overview')">01 Przegląd</button>
+    <button class="top-nav-btn" onclick="showSection('training')">02 Treningi</button>
+    <button class="top-nav-btn" onclick="showSection('mobility')">03 Mobilność</button>
+    <button class="top-nav-btn" onclick="showSection('nutrition')">04 Żywienie</button>
+    <button class="top-nav-btn" onclick="showSection('shopping')">05 Zakupy</button>
+    <button class="top-nav-btn" onclick="showSection('progression')">06 Progresja</button>
+  </nav>
+</div>
+
+<!-- ═══ MAIN ═══ -->
+<main style="max-width:800px;margin:0 auto">
+
+<!-- ─── 01 OVERVIEW ─── -->
+<section id="overview" class="section active">
+  <div id="installBanner" class="install-banner">
+    <div class="install-icon">📱</div>
+    <div class="install-text">
+      <strong>Dodaj do ekranu głównego iPhone</strong>
+      Safari → ikona udostępniania → „Dodaj do ekranu głównego" → gotowy shortcut jak aplikacja
+    </div>
+    <button class="install-close" onclick="document.getElementById('installBanner').style.display='none'">✕</button>
+  </div>
+
+  <div class="sec-title">Przegląd <span>Tygodnia</span></div>
+  <div class="sec-sub">Architektura systemu</div>
+
+  <div class="stat-pills">
+    <div class="stat-pill"><span class="stat-pill-val">5</span><span class="stat-pill-lbl">sesji/tyg</span></div>
+    <div class="stat-pill"><span class="stat-pill-val" id="ov-protein">155g</span><span class="stat-pill-lbl">białko/dzień</span></div>
+    <div class="stat-pill"><span class="stat-pill-val">4+1</span><span class="stat-pill-lbl">cykl deload</span></div>
+    <div class="stat-pill"><span class="stat-pill-val">RPE</span><span class="stat-pill-lbl">autoregulacja</span></div>
+  </div>
+
+  <div class="week-grid">
+    <div class="day-card">
+      <div class="day-name">Poniedziałek</div>
+      <div class="day-type">Push A</div>
+      <div class="day-time">07:00–08:10</div>
+      <div class="day-tags"><span class="tag t-o">Siła</span><span class="tag t-b">Klata</span><span class="tag t-t">Barki</span></div>
+    </div>
+    <div class="day-card">
+      <div class="day-name">Wtorek</div>
+      <div class="day-type">Pull A</div>
+      <div class="day-time">07:00–08:40</div>
+      <div class="day-tags"><span class="tag t-o">Siła</span><span class="tag t-b">Plecy</span><span class="tag t-p">Biceps</span></div>
+    </div>
+    <div class="day-card rest">
+      <div class="day-name">Środa</div>
+      <div class="day-type">Mobilność</div>
+      <div class="day-time">30–45min</div>
+      <div class="day-tags"><span class="tag t-g">Pasywna</span><span class="tag t-t">Izometria</span></div>
+    </div>
+    <div class="day-card">
+      <div class="day-name">Czw AM</div>
+      <div class="day-type">Atletyzm</div>
+      <div class="day-time">07:00–08:40</div>
+      <div class="day-tags"><span class="tag t-r">Skoki</span><span class="tag t-y">Plio</span><span class="tag t-t">Sprint</span></div>
+    </div>
+    <div class="day-card key">
+      <div class="day-name">Czw PM</div>
+      <div class="day-type">Lower</div>
+      <div class="day-time">16:15–17:45</div>
+      <div class="day-tags"><span class="tag t-o">Goblet</span><span class="tag t-b">RDL</span><span class="tag t-g">Glutes</span></div>
+    </div>
+    <div class="day-card rest">
+      <div class="day-name">Piątek</div>
+      <div class="day-type">Mobilność</div>
+      <div class="day-time">30–45min</div>
+      <div class="day-tags"><span class="tag t-g">Recovery</span><span class="tag t-t">Aktyw.</span></div>
+    </div>
+    <div class="day-card">
+      <div class="day-name">Weekend</div>
+      <div class="day-type">Push B</div>
+      <div class="day-time">Elastyczna</div>
+      <div class="day-tags"><span class="tag t-r">Moc</span><span class="tag t-b">Klata</span><span class="tag t-g">Cardio</span></div>
+    </div>
+  </div>
+
+  <h3>Logika systemu</h3>
+  <div class="card card-accent" style="margin-bottom:6px">
+    <h4>Dlaczego brak back squat</h4>
+    <p style="font-size:13px;color:var(--text2);line-height:1.75;max-width:none">Anterior pelvic tilt + ograniczona rotacja bioder + zero doświadczenia z tym ruchem = wysokie ryzyko złego wzorca. Zamiast: <strong style="color:var(--text)">Tygodnie 1–4: Goblet squat</strong> (wymusza PPT, uczy wzorca) → <strong style="color:var(--text)">5–8: Bulgarian split squat</strong> → <strong style="color:var(--text)">9+: Hack squat maszyna</strong>. Back squat powróci gdy wzorzec biodra będzie solidny.</p>
+  </div>
+  <div class="card card-accent" style="margin-bottom:6px">
+    <h4>PAP — Czwartek AM + PM</h4>
+    <p style="font-size:13px;color:var(--text2);line-height:1.75;max-width:none">Pliometria rano potencjuje CNS przed ciężką sesją wieczorną. Efekt Post-Activation Potentiation (Tillin &amp; Bishop, 2009) — sesja athletyczna generuje wyższy poziom gotowości nerwowo-mięśniowej na 6–8h.</p>
+  </div>
+  <div class="card card-accent">
+    <h4>Rekompozyja — nauka</h4>
+    <p style="font-size:13px;color:var(--text2);line-height:1.75;max-width:none">Deficyt 250–350 kcal + białko 2.0g/kg + trening siłowy = max efekt recompu (Barakat et al., 2020). Redukcja tkanki tłuszczowej z ~18% do ~12% naturalnie podniesie testosteron przez ograniczenie aktywności aromatazy.</p>
+  </div>
+</section>
+
+<!-- ─── 02 TRAINING ─── -->
+<section id="training" class="section">
+  <div class="sec-title">Treningi</div>
+  <div class="sec-sub">Plan sesji · zestawy · RPE · cię&shy;żary</div>
+
+  <div class="sub-tabs">
+    <button class="sub-btn active" onclick="showSub('training','mon')">Pon</button>
+    <button class="sub-btn" onclick="showSub('training','tue')">Wt</button>
+    <button class="sub-btn" onclick="showSub('training','thuam')">Czw AM</button>
+    <button class="sub-btn" onclick="showSub('training','thupm')">Czw PM ★</button>
+    <button class="sub-btn" onclick="showSub('training','wknd')">Weekend</button>
+  </div>
+
+  <!-- MON -->
+  <div id="sub-training-mon" class="sub-section active">
+    <div class="warn-note"><strong>5 min przed:</strong> 90/90 hip flexor stretch 45s/str. + Glute bridge 15 reps z PPT cueing. Aktywuje glutes, deaktywuje psoas.</div>
+
+    <div class="ex-block">
+      <div class="ex-block-title"><div class="ex-block-dot"></div>Blok A — Siła (20min)<span class="ex-block-meta">Wysoka intensywność</span></div>
+
+      <div class="ex-card">
+        <div class="ex-num">A1</div>
+        <div class="ex-name">Wyciskanie sztangi (flat bench)</div>
+        <div class="ex-row">
+          <div class="ex-badge"><span>Serie</span> <span class="ex-sets">4 × 4–5</span></div>
+          <div class="ex-badge"><span>Obciążenie</span> <strong id="bench-work-mon" style="color:var(--accent)">66 kg</strong></div>
+          <div class="ex-badge"><span>RPE</span> <span class="ex-rpe-h">8–8.5</span></div>
+          <div class="ex-badge"><span>Przerwa</span> 3–4 min</div>
+        </div>
+        <div class="ex-note">Łokcie 45–75°, scapular retraction. Liczy się jakość, nie grind. 78% 1RM — aktualizuje się z panelu config.</div>
+      </div>
+
+      <div class="ex-card">
+        <div class="ex-num">A2</div>
+        <div class="ex-name">Overhead Press DB (stojąco)</div>
+        <div class="ex-row">
+          <div class="ex-badge"><span>Serie</span> <span class="ex-sets">3 × 6–8</span></div>
+          <div class="ex-badge"><span>Obciążenie</span> 22–26 kg</div>
+          <div class="ex-badge"><span>RPE</span> <span class="ex-rpe-m">7–8</span></div>
+          <div class="ex-badge"><span>Przerwa</span> 2 min</div>
+        </div>
+        <div class="ex-note">Brak wyprostu lędźwiowego — posterior tilt przez cały ruch. Wzorzec naprawczy dla APT.</div>
+      </div>
+    </div>
+
+    <div class="ex-block">
+      <div class="ex-block-title"><div class="ex-block-dot"></div>Blok B — Hipertrofia (35min)<span class="ex-block-meta">TUT · mechaniczne napięcie</span></div>
+
+      <div class="ex-card">
+        <div class="ex-num">B1</div>
+        <div class="ex-name">Incline DB Press (30–45°)</div>
+        <div class="ex-row">
+          <div class="ex-badge"><span>Serie</span> <span class="ex-sets">3 × 10–12</span></div>
+          <div class="ex-badge"><span>Obciążenie</span> 26–30 kg</div>
+          <div class="ex-badge"><span>RPE</span> <span class="ex-rpe-m">7–8</span></div>
+          <div class="ex-badge"><span>Przerwa</span> 90s</div>
+        </div>
+        <div class="ex-note">Full ROM, pause na dole 1s. Stretch klatki = max hypertrophy stimulus (Pereira et al., 2022).</div>
+      </div>
+
+      <div class="ex-card">
+        <div class="ex-num">B2</div>
+        <div class="ex-name">Cable Lateral Raise (1 ręka)</div>
+        <div class="ex-row">
+          <div class="ex-badge"><span>Serie</span> <span class="ex-sets">3 × 12–15</span></div>
+          <div class="ex-badge"><span>RPE</span> <span class="ex-rpe-m">7–8</span></div>
+          <div class="ex-badge"><span>Przerwa</span> 60s</div>
+        </div>
+        <div class="ex-note">Kabel > DB — stałe napięcie przez cały ROM. Kciuk lekko w dół, łokieć lekko ugięty.</div>
+      </div>
+
+      <div class="ex-card">
+        <div class="ex-num">B3</div>
+        <div class="ex-name">Pec Deck / Cable Fly (naprzemiennie)</div>
+        <div class="ex-row">
+          <div class="ex-badge"><span>Serie</span> <span class="ex-sets">3 × 12–15</span></div>
+          <div class="ex-badge"><span>RPE</span> <span class="ex-rpe-l">7</span></div>
+          <div class="ex-badge"><span>Przerwa</span> 60s</div>
+        </div>
+        <div class="ex-note">Tydzień 1/3: Pec deck (stabilny, łatwiejsze połączenie nerwowe). Tydzień 2/4: Cable fly (większy ROM). Oba mają inne zalety.</div>
+      </div>
+
+      <div class="ex-card">
+        <div class="ex-num">C1</div>
+        <div class="ex-name">Triceps Pushdown (kabel, V-bar)</div>
+        <div class="ex-row">
+          <div class="ex-badge"><span>Serie</span> <span class="ex-sets">3 × 12–15</span></div>
+          <div class="ex-badge"><span>RPE</span> <span class="ex-rpe-l">6–7</span></div>
+          <div class="ex-badge"><span>Przerwa</span> 60s</div>
+        </div>
+        <div class="ex-note">Łokcie przy tułowiu, pełny wyprost. Można supersettować z B3.</div>
+      </div>
+
+      <div class="ex-card">
+        <div class="ex-num">C2</div>
+        <div class="ex-name">Overhead Triceps Ext. DB</div>
+        <div class="ex-row">
+          <div class="ex-badge"><span>Serie</span> <span class="ex-sets">3 × 10–12</span></div>
+          <div class="ex-badge"><span>RPE</span> <span class="ex-rpe-m">7</span></div>
+          <div class="ex-badge"><span>Przerwa</span> 60s</div>
+        </div>
+        <div class="ex-note">Długa głowa tricepsa w pełnym rozciągnięciu — unikalny bodziec. Powolny eccentric.</div>
+      </div>
+    </div>
+
+    <div class="ex-block">
+      <div class="ex-block-title"><div class="ex-block-dot"></div>Core — Finisher (10min)</div>
+      <div class="ex-card">
+        <div class="ex-num">D1</div>
+        <div class="ex-name">Dead Bug (z PPT)</div>
+        <div class="ex-row"><div class="ex-badge"><span>Serie</span> <span class="ex-sets">3 × 8/str.</span></div></div>
+        <div class="ex-note">Lędźwie przyklejone do podłogi cały czas. Kluczowe dla korekty APT i stabilizacji bench.</div>
+      </div>
+      <div class="ex-card">
+        <div class="ex-num">D2</div>
+        <div class="ex-name">Hollow Body Hold</div>
+        <div class="ex-row"><div class="ex-badge"><span>Serie</span> <span class="ex-sets">3 × 20–30s</span></div></div>
+        <div class="ex-note">Posterior tilt, zero lordozy. Transferuje na OHP i bench pozycję.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TUE -->
+  <div id="sub-training-tue" class="sub-section">
+    <div class="warn-note"><strong>5 min przed:</strong> Band pull-aparts × 20 + Face pulls z taśmą × 15 + T-spine rotations 5/str.</div>
+
+    <div class="ex-block">
+      <div class="ex-block-title"><div class="ex-block-dot"></div>Blok A — Siła Pleców (25min)</div>
+      <div class="ex-card">
+        <div class="ex-num">A1</div>
+        <div class="ex-name">Podciąganie na drążku</div>
+        <div class="ex-row">
+          <div class="ex-badge"><span>Serie</span> <span class="ex-sets">4 × 4–6</span></div>
+          <div class="ex-badge"><span>Obciążenie</span> BW + 5–15 kg</div>
+          <div class="ex-badge"><span>RPE</span> <span class="ex-rpe-h">8–9</span></div>
+          <div class="ex-badge"><span>Przerwa</span> 3–4 min</div>
+        </div>
+        <div class="ex-note">Dead hang pełny, chin above bar. Dodaj obciążenie gdy BW nie osiąga RPE 8. Nie zmniejszaj ROM nigdy.</div>
+      </div>
+      <div class="ex-card">
+        <div class="ex-num">A2</div>
+        <div class="ex-name">Barbell Bent-Over Row (pronation)</div>
+        <div class="ex-row">
+          <div class="ex-badge"><span>Serie</span> <span class="ex-sets">4 × 5–6</span></div>
+          <div class="ex-badge"><span>Obciążenie</span> 55–70 kg</div>
+          <div class="ex-badge"><span>RPE</span> <span class="ex-rpe-h">8</span></div>
+          <div class="ex-badge"><span>Przerwa</span> 3 min</div>
+        </div>
+        <div class="ex-note">Tułów 45–60°, bez zamachu. Scapular retraction na szczycie. Balansuje bench horyzontalnie.</div>
+      </div>
+    </div>
+
+    <div class="ex-block">
+      <div class="ex-block-title"><div class="ex-block-dot"></div>Blok B — Hipertrofia Pleców (40min)</div>
+      <div class="ex-card">
+        <div class="ex-num">B1</div>
+        <div class="ex-name">Cable Seated Row (szeroki uchwyt)</div>
+        <div class="ex-row">
+          <div class="ex-badge"><span>Serie</span> <span class="ex-sets">3 × 10–12</span></div>
+          <div class="ex-badge"><span>RPE</span> <span class="ex-rpe-m">7–8</span></div>
+          <div class="ex-badge"><span>Przerwa</span> 90s</div>
+        </div>
+        <div class="ex-note">Pauza 1s na szczycie, pełny forward-lean stretch na początku. Stałe napięcie = grubość pleców.</div>
+      </div>
+      <div class="ex-card">
+        <div class="ex-num">B2</div>
+        <div class="ex-name">Single-Arm DB Row</div>
+        <div class="ex-row">
+          <div class="ex-badge"><span>Serie</span> <span class="ex-sets">3 × 10–12</span></div>
+          <div class="ex-badge"><span>Obciążenie</span> 30–38 kg</div>
+          <div class="ex-badge"><span>RPE</span> <span class="ex-rpe-m">7–8</span></div>
+          <div class="ex-badge"><span>Przerwa</span> 90s</div>
+        </div>
+        <div class="ex-note">Ciągnij łopatką, nie bicepsem. Łokieć za linię tułowia na szczycie. Koryguje asymetrie.</div>
+      </div>
+      <div class="ex-card">
+        <div class="ex-num">B3</div>
+        <div class="ex-name">Face Pulls z kabla</div>
+        <div class="ex-row">
+          <div class="ex-badge"><span>Serie</span> <span class="ex-sets">3 × 15–20</span></div>
+          <div class="ex-badge"><span>RPE</span> <span class="ex-rpe-l">6–7</span></div>
+          <div class="ex-badge"><span>Przerwa</span> 60s</div>
+        </div>
+        <div class="ex-note">Rope handle, na poziomie twarzy, łokcie powyżej barków. Kluczowy dla zdrowia stożka rotatorów.</div>
+      </div>
+      <div class="ex-card">
+        <div class="ex-num">C1 + C2</div>
+        <div class="ex-name">DB Curl (naprzemiennie) + Incline DB Curl</div>
+        <div class="ex-row">
+          <div class="ex-badge"><span>Serie</span> <span class="ex-sets">3 × 10–12 każde</span></div>
+          <div class="ex-badge"><span>RPE</span> <span class="ex-rpe-m">7–8</span></div>
+          <div class="ex-badge"><span>Przerwa</span> 60s</div>
+        </div>
+        <div class="ex-note">C1: supinacja przy uniesieniu. C2 (45° ławka): długa głowa w pełnym rozciągnięciu — max mTOR. Slow eccentric 2s.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- THU AM -->
+  <div id="sub-training-thuam" class="sub-section">
+    <div class="sci-note"><strong>Cel sesji:</strong> CNS + pliometria. Zawsze przed sesją PM. Efekt PAP transferuje na wieczorny lifting przez 6–8h. Moc i prędkość = zawsze maksymalna intencja.</div>
+
+    <div class="ex-block">
+      <div class="ex-block-title"><div class="ex-block-dot"></div>Rozgrzewka CNS (15min)</div>
+      <div class="ex-card"><div class="ex-name">Hip mobility flow</div><div class="ex-note">90/90 hip rotation + world's greatest stretch 5/str. + lateral lunge z pauzą 3s + ankle circles. 5 min świadomej mobilności przed obciążeniem.</div></div>
+      <div class="ex-card"><div class="ex-name">Glute bridge march (miniband)</div><div class="ex-row"><div class="ex-badge"><span>Serie</span><span class="ex-sets">2 × 10/str.</span></div></div><div class="ex-note">Taśma nad kolanami. Kontrola koślawości = przygotowanie do prawidłowego lądowania przy skokach.</div></div>
+    </div>
+
+    <div class="ex-block">
+      <div class="ex-block-title"><div class="ex-block-dot"></div>Pliometria (25min)<span class="ex-block-meta">MAX intencja · pełna przerwa</span></div>
+      <div class="ex-card">
+        <div class="ex-num">B1</div>
+        <div class="ex-name">Vertical Jump (CMJ)</div>
+        <div class="ex-row"><div class="ex-badge"><span>Serie</span><span class="ex-sets">4 × 3</span></div><div class="ex-badge"><span>Przerwa</span>2–3 min</div></div>
+        <div class="ex-note">Counter-movement jump — miękkie lądowanie z absorpcją (kolana nad stopami). MAX intencja każdego skoku. Śledź wysokość jako marker atletyczny.</div>
+      </div>
+      <div class="ex-card">
+        <div class="ex-num">B2</div>
+        <div class="ex-name">Broad Jump (skok w dal)</div>
+        <div class="ex-row"><div class="ex-badge"><span>Serie</span><span class="ex-sets">4 × 3</span></div><div class="ex-badge"><span>Przerwa</span>2 min</div></div>
+        <div class="ex-note">Swing ramionami, full extension. Lądowanie atletyczne. Transfer na sprint i eksplozję ze startu.</div>
+      </div>
+      <div class="ex-card">
+        <div class="ex-num">B3</div>
+        <div class="ex-name">Box Step-Up Jump (unilateral)</div>
+        <div class="ex-row"><div class="ex-badge"><span>Serie</span><span class="ex-sets">3 × 4/str.</span></div><div class="ex-badge"><span>Przerwa</span>90s</div></div>
+        <div class="ex-note">Skrzynia 40–50cm. Lądowanie jednonóż, kontrola koślawości. Progres: +5cm wysokości co 2 tygodnie.</div>
+      </div>
+    </div>
+
+    <div class="ex-block">
+      <div class="ex-block-title"><div class="ex-block-dot"></div>Sprinty + Koordynacja (30min)</div>
+      <div class="ex-card">
+        <div class="ex-num">C1</div>
+        <div class="ex-name">Sprinty przyspieszeniowe 10m</div>
+        <div class="ex-row"><div class="ex-badge"><span>Powtórzenia</span><span class="ex-sets">6–8 × 10m</span></div><div class="ex-badge"><span>Przerwa</span>2–3 min pełna</div></div>
+        <div class="ex-note">Pochylenie ~45°, potężne odpychanie. MAX wysiłek. Nie jogging — prawdziwy sprint.</div>
+      </div>
+      <div class="ex-card">
+        <div class="ex-num">C2</div>
+        <div class="ex-name">Lateral Shuffle → Sprint (agility)</div>
+        <div class="ex-row"><div class="ex-badge"><span>Serie</span><span class="ex-sets">4 × 15m</span></div><div class="ex-badge"><span>Przerwa</span>90s</div></div>
+        <div class="ex-note">Shuffle boczny 5m + sprint 10m. Niskie centrum ciężkości w shufflu.</div>
+      </div>
+      <div class="ex-card">
+        <div class="ex-num">C3</div>
+        <div class="ex-name">A-skip + B-skip drills</div>
+        <div class="ex-row"><div class="ex-badge"><span>Powtórzenia</span><span class="ex-sets">2 × 20m/drill</span></div></div>
+        <div class="ex-note">Technika biegu — fundament mechaniki sprintu.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- THU PM -->
+  <div id="sub-training-thupm" class="sub-section">
+    <div class="warn-note"><strong>KEY SESSION — szczyt tygodnia.</strong> Najwyższe kalorie, max węgle (posiłek 2h przed o 14:30). Protokół mobilności 10 min przed: 90/90 + adductor rock + hamstring nerve floss.</div>
+
+    <div class="ex-block">
+      <div class="ex-block-title"><div class="ex-block-dot"></div>Aktywacja (10min)</div>
+      <div class="ex-card"><div class="ex-name">Glute Bridge PPT (miniband) + Goblet Squat Pattern</div><div class="ex-row"><div class="ex-badge"><span>Serie</span><span class="ex-sets">2 × 15 + 3 × 5</span></div></div><div class="ex-note">Taśma nad kolanami. Goblet squat z DB/KB — pusty lub bardzo lekki. Wzorzec ruchowy przed obciążeniem.</div></div>
+    </div>
+
+    <div class="ex-block">
+      <div class="ex-block-title"><div class="ex-block-dot"></div>Blok A — Siła (25min)</div>
+
+      <div class="sci-note"><strong>Progresja nóg:</strong> Tyg. 1–4 = Goblet squat (nauka wzorca + PPT). Tyg. 5–8 = Bulgarian Split Squat (unilateral, mniejszy wymóg mobilności). Tyg. 9+ = Hack squat maszyna. Back squat powróci gdy wzorzec będzie solidny.</div>
+
+      <div class="ex-card">
+        <div class="ex-num">A1</div>
+        <div class="ex-name">Goblet Squat (KB/DB) <span style="color:var(--text3);font-size:12px">Tyg. 1–4</span></div>
+        <div class="ex-row">
+          <div class="ex-badge"><span>Serie</span><span class="ex-sets">4 × 8–10</span></div>
+          <div class="ex-badge"><span>Obciążenie</span>20–32 kg</div>
+          <div class="ex-badge"><span>RPE</span><span class="ex-rpe-m">7–8</span></div>
+          <div class="ex-badge"><span>Przerwa</span>3 min</div>
+        </div>
+        <div class="ex-note">Ciężar przy klatce naturalnie wymusza upright torso i PPT. Pełna głębokość. Focus na kolanach nad palcami, PPT na dole.</div>
+      </div>
+
+      <div class="ex-card">
+        <div class="ex-num">A2</div>
+        <div class="ex-name">Romanian Deadlift (RDL)</div>
+        <div class="ex-row">
+          <div class="ex-badge"><span>Serie</span><span class="ex-sets">4 × 5–6</span></div>
+          <div class="ex-badge"><span>Obciążenie</span>55–75 kg</div>
+          <div class="ex-badge"><span>RPE</span><span class="ex-rpe-h">8</span></div>
+          <div class="ex-badge"><span>Przerwa</span>3 min</div>
+        </div>
+        <div class="ex-note">Kręgosłup neutralny przez cały ruch. Czujesz hamstring w dolnej pozycji = prawidłowo. Kluczowy dla posteriornego łańcucha i APT korekty.</div>
+      </div>
+    </div>
+
+    <div class="ex-block">
+      <div class="ex-block-title"><div class="ex-block-dot"></div>Blok B — Hipertrofia + Moc (35min)</div>
+
+      <div class="ex-card">
+        <div class="ex-num">B1</div>
+        <div class="ex-name">Hip Thrust (barbell / smith)</div>
+        <div class="ex-row">
+          <div class="ex-badge"><span>Serie</span><span class="ex-sets">3 × 8–10</span></div>
+          <div class="ex-badge"><span>Obciążenie</span>80–100 kg</div>
+          <div class="ex-badge"><span>RPE</span><span class="ex-rpe-m">7–8</span></div>
+          <div class="ex-badge"><span>Przerwa</span>2 min</div>
+        </div>
+        <div class="ex-note">PPT na szczycie, pełne wciśnięcie gluteów. Najefektywniejsze ćwiczenie dla gluteus maximus (Contreras, 2015). Adresuje APT bezpośrednio.</div>
+      </div>
+
+      <div class="ex-card">
+        <div class="ex-num">B2</div>
+        <div class="ex-name">Hack Squat / Leg Press (maszyna)</div>
+        <div class="ex-row">
+          <div class="ex-badge"><span>Serie</span><span class="ex-sets">3 × 10–12</span></div>
+          <div class="ex-badge"><span>RPE</span><span class="ex-rpe-m">7–8</span></div>
+          <div class="ex-badge"><span>Przerwa</span>90s</div>
+        </div>
+        <div class="ex-note">Quad dominant. Mniejsze wymagania mobilności bioder. Eccentric kontrolowany 3s.</div>
+      </div>
+
+      <div class="ex-card">
+        <div class="ex-num">B3</div>
+        <div class="ex-name">Seated Leg Curl (maszyna)</div>
+        <div class="ex-row">
+          <div class="ex-badge"><span>Serie</span><span class="ex-sets">3 × 10–12</span></div>
+          <div class="ex-badge"><span>RPE</span><span class="ex-rpe-m">7–8</span></div>
+          <div class="ex-badge"><span>Przerwa</span>90s</div>
+        </div>
+        <div class="ex-note">Seated preferowany — hamstring w krótszej długości. Slow eccentric 3s = max stimulus dla słabego zakresu.</div>
+      </div>
+
+      <div class="ex-card">
+        <div class="ex-num">B4</div>
+        <div class="ex-name">Nordic Curl — Eccentric Only ⚡</div>
+        <div class="ex-row">
+          <div class="ex-badge"><span>Serie</span><span class="ex-sets">3 × 3–5</span></div>
+          <div class="ex-badge"><span>RPE</span><span class="ex-rpe-h">8–9</span></div>
+          <div class="ex-badge"><span>Przerwa</span>2 min</div>
+        </div>
+        <div class="ex-note">TYLKO faza ekscentryczna — 5s w dół, ręce ratują przy upadku. Adresuje short-range hamstring weakness. Van Dyk et al. (2019): –51% urazów. Min. 2× tyg. przez 10 tygodni.</div>
+      </div>
+
+      <div class="ex-card">
+        <div class="ex-num">B5</div>
+        <div class="ex-name">Walking Lunge (DB)</div>
+        <div class="ex-row">
+          <div class="ex-badge"><span>Serie</span><span class="ex-sets">3 × 10/str.</span></div>
+          <div class="ex-badge"><span>Obciążenie</span>16–22 kg</div>
+          <div class="ex-badge"><span>RPE</span><span class="ex-rpe-m">7</span></div>
+          <div class="ex-badge"><span>Przerwa</span>90s</div>
+        </div>
+        <div class="ex-note">Duży krok, tułów pionowy. Aktywny stretch hip flexora tylnej nogi — korekta APT w ruchu.</div>
+      </div>
+    </div>
+
+    <div class="ex-block">
+      <div class="ex-block-title"><div class="ex-block-dot"></div>Finisher (10min)</div>
+      <div class="ex-card"><div class="ex-name">Calf raise + Plank PPT + Ab wheel</div><div class="ex-row"><div class="ex-badge"><span>Serie</span><span class="ex-sets">3–4 × każde</span></div></div><div class="ex-note">Plank z PPT: zepchnij biodra w tył, napnij gluty. Zero lordozy = przenosi korekę APT na każdy dzień.</div></div>
+    </div>
+  </div>
+
+  <!-- WEEKEND -->
+  <div id="sub-training-wknd" class="sub-section">
+    <div class="warn-note"><strong>Cel:</strong> 2. bodziec dla klatki w tygodniu. Moc + prędkość nad objętością. Lżejsza sesja niż poniedziałek.</div>
+
+    <div class="ex-block">
+      <div class="ex-block-title"><div class="ex-block-dot"></div>Blok A — Moc (20min)</div>
+      <div class="ex-card">
+        <div class="ex-num">A1</div>
+        <div class="ex-name">Speed Bench (50% 1RM)</div>
+        <div class="ex-row">
+          <div class="ex-badge"><span>Serie</span><span class="ex-sets">5 × 3</span></div>
+          <div class="ex-badge"><span>Obciążenie</span><strong id="bench-speed-wknd" style="color:var(--accent)">42 kg</strong></div>
+          <div class="ex-badge"><span>RPE</span><span class="ex-rpe-l">6–7</span></div>
+          <div class="ex-badge"><span>Przerwa</span>3 min</div>
+        </div>
+        <div class="ex-note">MAX prędkość w fazie koncentrycznej. Bar speed > obciążenie. Westside method — trening mocy bez zmęczenia CNS.</div>
+      </div>
+      <div class="ex-card">
+        <div class="ex-num">A2</div>
+        <div class="ex-name">Push Press (DB lub BB)</div>
+        <div class="ex-row">
+          <div class="ex-badge"><span>Serie</span><span class="ex-sets">4 × 4</span></div>
+          <div class="ex-badge"><span>Obciążenie</span>30–40 kg</div>
+          <div class="ex-badge"><span>RPE</span><span class="ex-rpe-m">7</span></div>
+          <div class="ex-badge"><span>Przerwa</span>2 min</div>
+        </div>
+        <div class="ex-note">Lekki dip (15cm), eksplozywny drive nogi → biodra → ramiona. Atletyczny wzorzec kinetyczny.</div>
+      </div>
+    </div>
+
+    <div class="ex-block">
+      <div class="ex-block-title"><div class="ex-block-dot"></div>Blok B — Hipertrofia (30min)</div>
+      <div class="ex-card"><div class="ex-num">B1</div><div class="ex-name">Dips (piersiowe)</div><div class="ex-row"><div class="ex-badge"><span>Serie</span><span class="ex-sets">3 × 8–12</span></div><div class="ex-badge"><span>RPE</span><span class="ex-rpe-m">7–8</span></div></div><div class="ex-note">Pochylenie do przodu, pełny ROM. Dolna klatka + triceps.</div></div>
+      <div class="ex-card"><div class="ex-num">B2</div><div class="ex-name">Pec Deck (inna wersja niż pon) + Drop Set</div><div class="ex-row"><div class="ex-badge"><span>Serie</span><span class="ex-sets">3 × 12 + DS</span></div><div class="ex-badge"><span>RPE</span><span class="ex-rpe-m">8</span></div></div><div class="ex-note">Drop set: –30% obciążenia od razu, max reps. Metaboliczny stres = hipertroficzny trigger.</div></div>
+      <div class="ex-card"><div class="ex-num">B3</div><div class="ex-name">DB Lateral Raise (drop set)</div><div class="ex-row"><div class="ex-badge"><span>Serie</span><span class="ex-sets">3 × 12 + DS</span></div><div class="ex-badge"><span>RPE</span><span class="ex-rpe-m">8</span></div></div><div class="ex-note">Inny kąt/bodziec niż kablowe z poniedziałku.</div></div>
+    </div>
+
+    <div class="ex-block">
+      <div class="ex-block-title"><div class="ex-block-dot"></div>Cardio Finisher (15min)</div>
+      <div class="ex-card"><div class="ex-name">HIIT lub Steady-State</div><div class="ex-note">Opcja A: 10 × 30s sprint / 30s odpoczynek (wyższy EPOC przy recompu). Opcja B: 15min bieg 65% HRmax (regeneracja podczas cyklu). Dobierz wg stanu z dnia.</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── 03 MOBILITY ─── -->
+<section id="mobility" class="section">
+  <div class="sec-title">Protokół <span>Mobilności</span></div>
+  <div class="sec-sub">Środa + Piątek · Release → Mobilizacja → Izometria → Aktywacja</div>
+
+  <div class="sub-tabs">
+    <button class="sub-btn active" onclick="showSub('mobility','wed')">Środa (progresywna)</button>
+    <button class="sub-btn" onclick="showSub('mobility','fri')">Piątek (regeneracyjna)</button>
+    <button class="sub-btn" onclick="showSub('mobility','pre')">Pre-sesja (5min)</button>
+  </div>
+
+  <div id="sub-mobility-wed" class="sub-section active">
+    <div class="mob-card">
+      <div class="mob-hdr"><span class="mob-phase">Release</span><span style="font-size:13px;font-weight:600">Foam roller + lacrosse ball</span><span class="mob-time-badge">8 min</span></div>
+      <div class="mob-body">
+        <div class="mob-desc">Hip flexors (TFL + rectus femoris) — foam roller 45–60s każda strona. Piriformis — lacrosse ball pod pośladek, szukaj trigger pointów 30s. Thoracic spine — foam roller poprzecznie 8–10 rozwinięć. Hamstring proximally (ischial tuberosity) — lacrosse ball 30s każdy punkt.</div>
+      </div>
+    </div>
+    <div class="mob-card">
+      <div class="mob-hdr"><span class="mob-phase">Mobilizacja</span><span style="font-size:13px;font-weight:600">Pasywna + dynamiczna</span><span class="mob-time-badge">10 min</span></div>
+      <div class="mob-body">
+        <div class="mob-desc">90/90 hip rotation (internal + external) — 60s każda pozycja × 3. Adductor rock-back — 10 reps/str. World's greatest stretch — 5 reps/str. (lunge + rotacja klatki). Half-kneeling hip flexor stretch z PPT — 45s × 3 każda strona.</div>
+      </div>
+    </div>
+    <div class="mob-card">
+      <div class="mob-hdr"><span class="mob-phase">Izometria</span><span style="font-size:13px;font-weight:600">Short-range hamstring</span><span class="mob-time-badge">8 min</span></div>
+      <div class="mob-body">
+        <div class="mob-desc">Nordic hamstring ISO hold — kąt 30° od podłogi, trzymaj 30s × 3. Supine hamstring ISO (miniband za piętę, napnij hamstring) — 30s × 3/str. Cel: siła w krótkim zakresie (Halperin et al., 2014: +58% ROM vs pasywny stretch).</div>
+      </div>
+    </div>
+    <div class="mob-card">
+      <div class="mob-hdr"><span class="mob-phase">Aktywacja</span><span style="font-size:13px;font-weight:600">Glute + hip abductors</span><span class="mob-time-badge">8 min</span></div>
+      <div class="mob-body">
+        <div class="mob-desc">Clamshells z minibandą — 20 reps × 3/str. Glute bridge PPT hold 3s × 15 × 2. Banded hip abduction (stojąco) — 15 × 2/str. Monster walk — 10 kroków przód-tył × 2. Fire hydrant — 12 × 2/str.</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="sub-mobility-fri" class="sub-section">
+    <div class="mob-card">
+      <div class="mob-hdr"><span class="mob-phase">Release</span><span style="font-size:13px;font-weight:600">Massage gun + lacrosse</span><span class="mob-time-badge">6 min</span></div>
+      <div class="mob-body"><div class="mob-desc">Massage gun — quady + hip flexors 2 min/str. (poziom 2). Lacrosse ball — piriformis + ischial attachment 30s każdy spot. Szybsza wersja.</div></div>
+    </div>
+    <div class="mob-card">
+      <div class="mob-hdr"><span class="mob-phase">Mobilizacja</span><span style="font-size:13px;font-weight:600">Dynamiczna + oddech</span><span class="mob-time-badge">8 min</span></div>
+      <div class="mob-body"><div class="mob-desc">90/90 breathing — wdech nos, wydech usta z PPT 5×. Hip CARs (controlled articular rotations) — pełne okrążenia 5/str. × 2. Lateral lunge z pauzą 3s — 8/str. T-spine rotation w quadruped — 10/str.</div></div>
+    </div>
+    <div class="mob-card">
+      <div class="mob-hdr"><span class="mob-phase">Izometria</span><span style="font-size:13px;font-weight:600">Copenhagen adductor</span><span class="mob-time-badge">6 min</span></div>
+      <div class="mob-body"><div class="mob-desc">Copenhagen adductor squeeze (na boku, zgięcie 90°) — 30s × 3/str. Harøy et al. (2019): –41% urazów pachwinowych, +35% siły adduktorów. Hamstring ISO hold (prone, miniband) — 20s × 3/str.</div></div>
+    </div>
+    <div class="mob-card">
+      <div class="mob-hdr"><span class="mob-phase">Aktywacja</span><span style="font-size:13px;font-weight:600">PPT drill + lekka aktywacja</span><span class="mob-time-badge">5 min</span></div>
+      <div class="mob-body"><div class="mob-desc">Standing PPT drill przy ścianie — 15 reps (napięcie abdominals + gluteów). Single leg glute bridge 10/str. × 2. Banded pull-through 10 × 2 — PPT na szczycie.</div></div>
+    </div>
+  </div>
+
+  <div id="sub-mobility-pre" class="sub-section">
+    <div class="warn-note"><strong>Przed KAŻDĄ sesją (5 min) — zawsze to samo:</strong> minimalna decyzyjność, maksymalny efekt prewencyjny.</div>
+    <div class="mob-card">
+      <div class="mob-hdr"><span class="mob-phase">Pre-Session</span><span style="font-size:13px;font-weight:600">Primer zawsze identyczny</span><span class="mob-time-badge">5 min</span></div>
+      <div class="mob-body"><div class="mob-desc">1. 90/90 hip flexor stretch — 45s każda strona<br>2. Glute bridge × 15 z PPT cueing<br>3. T-spine rotations w quadruped 5/str.<br>4. Leg swings (przód-tył + boczne) 10/str.<br><br>Ten sam protokół każdego dnia — brak decyzji, brak omijania.</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── 04 NUTRITION ─── -->
+<section id="nutrition" class="section">
+  <div class="sec-title">System <span>Żywienia</span></div>
+  <div class="sec-sub">Kaloryczny cycling · timing · krajanowe posiłki</div>
+
+  <div class="g3" style="margin-bottom:20px">
+    <div class="card">
+      <h4>Dni Treningowe</h4>
+      <div style="font-size:28px;font-weight:700;color:var(--accent);line-height:1;margin-bottom:10px"><span id="n-kcal-train">2580</span> kcal</div>
+      <div class="macro-row"><span class="macro-lbl">Białko</span><div class="macro-track"><div class="macro-fill" id="n-bar-p-t" style="width:62%;background:var(--blue)"></div></div><span class="macro-val"><span id="n-p-t">155</span>g</span></div>
+      <div class="macro-row"><span class="macro-lbl">Węgle</span><div class="macro-track"><div class="macro-fill" id="n-bar-c-t" style="width:55%;background:var(--yellow)"></div></div><span class="macro-val"><span id="n-c-t">305</span>g</span></div>
+      <div class="macro-row"><span class="macro-lbl">Tłuszcze</span><div class="macro-track"><div class="macro-fill" style="width:40%;background:var(--accent)"></div></div><span class="macro-val">77g</span></div>
+    </div>
+    <div class="card">
+      <h4>Dni Odpoczynku</h4>
+      <div style="font-size:28px;font-weight:700;color:var(--text2);line-height:1;margin-bottom:10px"><span id="n-kcal-rest">2220</span> kcal</div>
+      <div class="macro-row"><span class="macro-lbl">Białko</span><div class="macro-track"><div class="macro-fill" style="width:62%;background:var(--blue)"></div></div><span class="macro-val"><span id="n-p-r">155</span>g</span></div>
+      <div class="macro-row"><span class="macro-lbl">Węgle</span><div class="macro-track"><div class="macro-fill" id="n-bar-c-r" style="width:40%;background:var(--yellow)"></div></div><span class="macro-val"><span id="n-c-r">215</span>g</span></div>
+      <div class="macro-row"><span class="macro-lbl">Tłuszcze</span><div class="macro-track"><div class="macro-fill" style="width:45%;background:var(--accent)"></div></div><span class="macro-val">80g</span></div>
+    </div>
+    <div class="card">
+      <h4>Czwartek PM ★</h4>
+      <div style="font-size:28px;font-weight:700;color:var(--green);line-height:1;margin-bottom:10px">+50 kcal</div>
+      <div class="macro-row"><span class="macro-lbl">Białko</span><div class="macro-track"><div class="macro-fill" style="width:62%;background:var(--blue)"></div></div><span class="macro-val">155g</span></div>
+      <div class="macro-row"><span class="macro-lbl">Węgle</span><div class="macro-track"><div class="macro-fill" style="width:70%;background:var(--yellow)"></div></div><span class="macro-val">+60g</span></div>
+      <div class="macro-row"><span class="macro-lbl">Tłuszcze</span><div class="macro-track"><div class="macro-fill" style="width:33%;background:var(--accent)"></div></div><span class="macro-val">70g ↓</span></div>
+    </div>
+  </div>
+
+  <div class="sub-tabs">
+    <button class="sub-btn active" onclick="showSub('nutrition','breakfasts')">Śniadania</button>
+    <button class="sub-btn" onclick="showSub('nutrition','meals')">Posiłki (rotacja)</button>
+    <button class="sub-btn" onclick="showSub('nutrition','timing')">Timing Czw</button>
+    <button class="sub-btn" onclick="showSub('nutrition','prep')">Meal Prep</button>
+  </div>
+
+  <div id="sub-nutrition-breakfasts" class="sub-section active">
+    <div class="meal-card">
+      <span class="meal-flag">🥩</span>
+      <div class="meal-time">Środa — 07:00</div>
+      <div class="meal-name">Steak Morning</div>
+      <div class="meal-macros">
+        <div class="m-badge mb-p"><span class="v">88g</span><span class="u"> B</span></div>
+        <div class="m-badge mb-f"><span class="v">58g</span><span class="u"> T</span></div>
+        <div class="m-badge mb-c"><span class="v">18g</span><span class="u"> W</span></div>
+        <div class="m-badge mb-k"><span class="v">~940</span><span class="u"> kcal</span></div>
+      </div>
+      <div class="meal-content">
+        <strong>Antrykot / polędwiczka 300g</strong> — grillowane z solą morską + rozmaryn<br>
+        <strong>3 jaja</strong> — jajecznica lub sadzone na maśle klarowanym<br>
+        <strong>1 awokado</strong> — przekrojone, sól + cytryna<br>
+        <strong>1 kiwi</strong> — pokrojone
+      </div>
+      <div class="meal-tip">💡 Środa = dzień mobilności (niższe kalorie). Duże śniadanie = reszta dnia lżejsza (2 mniejsze posiłki).</div>
+    </div>
+
+    <div class="meal-card">
+      <span class="meal-flag">🥣</span>
+      <div class="meal-time">Pon / Wt / Czw / Weekend — 06:20</div>
+      <div class="meal-name">Power Oatmeal</div>
+      <div class="meal-macros">
+        <div class="m-badge mb-p"><span class="v">52g</span><span class="u"> B</span></div>
+        <div class="m-badge mb-f"><span class="v">9g</span><span class="u"> T</span></div>
+        <div class="m-badge mb-c"><span class="v">75g</span><span class="u"> W</span></div>
+        <div class="m-badge mb-k"><span class="v">~590</span><span class="u"> kcal</span></div>
+      </div>
+      <div class="meal-content">
+        <strong>60g płatki owsiane</strong> (instant, na ciepło lub zimno)<br>
+        <strong>50ml mleko 3.2</strong><br>
+        <strong>200g skyr naturalny</strong><br>
+        <strong>30g WPC KFD</strong> (wymieszany ze skyrem)<br>
+        <strong>1 banan</strong> lub <strong>80g borówki mrożone</strong> (rozmrozić wieczorem)
+      </div>
+      <div class="meal-tip">💡 Niskie tłuszcze = szybsze wchłanianie glukozy przed treningiem. Jedzono 40 min przed sesją.</div>
+    </div>
+  </div>
+
+  <div id="sub-nutrition-meals" class="sub-section">
+    <p style="font-size:13px;color:var(--text2);margin-bottom:16px;max-width:none">5 rotacyjnych szablonów posiłku głównego — ten sam shopping list, różne smaki. Każdy ~600–720 kcal, ~45–50g białka, ~60–80g węgli. Przygotowujesz mięso i podstawy w meal prepie, doprawiasz świeżo.</p>
+
+    <div class="meal-card">
+      <span class="meal-flag">🇯🇵</span>
+      <div class="meal-time">Poniedziałek / Czwartek</div>
+      <div class="meal-name">Teriyaki Bowl</div>
+      <div class="meal-macros">
+        <div class="m-badge mb-p"><span class="v">48g</span><span class="u"> B</span></div>
+        <div class="m-badge mb-c"><span class="v">72g</span><span class="u"> W</span></div>
+        <div class="m-badge mb-f"><span class="v">18g</span><span class="u"> T</span></div>
+        <div class="m-badge mb-k"><span class="v">~650</span><span class="u"> kcal</span></div>
+      </div>
+      <div class="meal-content">
+        <strong>170g pierś kurczaka</strong> — marynowana: sos sojowy 2 łyżki + miód 1 łyżeczka + czosnek granulowany + imbir mielony (wszystko z Biedronki)<br>
+        <strong>280g batat</strong> — pieczony w kostkach, 200°C / 20min<br>
+        <strong>Marchewka surowa 100g</strong> — julienne obok<br>
+        <strong>Sezam 5g</strong> na wierzch
+      </div>
+      <div class="meal-tip">💡 Meal prep: kurczak marynuje się przez noc, pieczesz rano razem z batatem przy środowym prepie.</div>
+    </div>
+
+    <div class="meal-card">
+      <span class="meal-flag">🇬🇷</span>
+      <div class="meal-time">Wtorek / Piątek</div>
+      <div class="meal-name">Mediterranean Bowl</div>
+      <div class="meal-macros">
+        <div class="m-badge mb-p"><span class="v">47g</span><span class="u"> B</span></div>
+        <div class="m-badge mb-c"><span class="v">65g</span><span class="u"> W</span></div>
+        <div class="m-badge mb-f"><span class="v">22g</span><span class="u"> T</span></div>
+        <div class="m-badge mb-k"><span class="v">~640</span><span class="u"> kcal</span></div>
+      </div>
+      <div class="meal-content">
+        <strong>200g tuńczyk w wodzie</strong> (puszka) — odsączony, oliwa EV + oregano + czosnek + sok z cytryny<br>
+        <strong>300g ziemniak gotowany schłodzony</strong> — pokrojony w kostkę<br>
+        <strong>Ogórek kiszony 2–3 szt.</strong> — pokrojony<br>
+        <strong>10ml oliwa extra virgin</strong><br>
+        <strong>Marchewka surowa 80g</strong>
+      </div>
+      <div class="meal-tip">💡 Zero gotowania — puszka + ziemniak z meal prepu + kiszonki z lodówki. Gotowe w 3 min.</div>
+    </div>
+
+    <div class="meal-card">
+      <span class="meal-flag">🇲🇽</span>
+      <div class="meal-time">Środa / po mobility</div>
+      <div class="meal-name">Mexican Beef Bowl</div>
+      <div class="meal-macros">
+        <div class="m-badge mb-p"><span class="v">45g</span><span class="u"> B</span></div>
+        <div class="m-badge mb-c"><span class="v">68g</span><span class="u"> W</span></div>
+        <div class="m-badge mb-f"><span class="v">24g</span><span class="u"> T</span></div>
+        <div class="m-badge mb-k"><span class="v">~670</span><span class="u"> kcal</span></div>
+      </div>
+      <div class="meal-content">
+        <strong>150g wołowina mielona 10%</strong> — podsmażona z cebulą + kumin + papryczka chili + czosnek (Biedronka: gotowe mieszanki przypraw meksykańskich)<br>
+        <strong>250g batat</strong> — pieczony<br>
+        <strong>½ awokado 75g</strong> (kupujesz w środę przy zakupach)<br>
+        <strong>Kiszonki 2–3 łyżki</strong>
+      </div>
+      <div class="meal-tip">💡 Środa to dzień zakupów — awokado jest świeże. Wołowina z meal prepu (środa rano).</div>
+    </div>
+
+    <div class="meal-card">
+      <span class="meal-flag">🇮🇹</span>
+      <div class="meal-time">Czwartek przed / po treningu</div>
+      <div class="meal-name">Italian Herb Bowl</div>
+      <div class="meal-macros">
+        <div class="m-badge mb-p"><span class="v">50g</span><span class="u"> B</span></div>
+        <div class="m-badge mb-c"><span class="v">78g</span><span class="u"> W</span></div>
+        <div class="m-badge mb-f"><span class="v">18g</span><span class="u"> T</span></div>
+        <div class="m-badge mb-k"><span class="v">~680</span><span class="u"> kcal</span></div>
+      </div>
+      <div class="meal-content">
+        <strong>170g indyk lub kurczak</strong> — rozmaryn + czosnek + tymianek + oliwa, pieczony<br>
+        <strong>300g ziemniak pieczony</strong> (w mundurkach, 200°C / 45min przy meal prepie)<br>
+        <strong>Kapusta kiszona 3–4 łyżki</strong><br>
+        <strong>10ml oliwa EV</strong> na ziemniak
+      </div>
+      <div class="meal-tip">💡 Czwartek = KEY day. Ten posiłek jedzony o 14:00–14:30 (2h przed sesją PM) = max glikogen na trening.</div>
+    </div>
+
+    <div class="meal-card">
+      <span class="meal-flag">🇵🇱</span>
+      <div class="meal-time">Weekend / elastyczny</div>
+      <div class="meal-name">Łosoś z Ziemniakiem</div>
+      <div class="meal-macros">
+        <div class="m-badge mb-p"><span class="v">46g</span><span class="u"> B</span></div>
+        <div class="m-badge mb-c"><span class="v">60g</span><span class="u"> W</span></div>
+        <div class="m-badge mb-f"><span class="v">25g</span><span class="u"> T</span></div>
+        <div class="m-badge mb-k"><span class="v">~645</span><span class="u"> kcal</span></div>
+      </div>
+      <div class="meal-content">
+        <strong>200g łosoś z puszki</strong> (odsączony) lub łosoś pieczony — koper + cytryna + czosnek<br>
+        <strong>280g ziemniak gotowany schłodzony</strong><br>
+        <strong>Marchewka surowa 100g</strong><br>
+        <strong>12ml oliwa EV</strong><br>
+        <strong>Ogórek kiszony</strong>
+      </div>
+      <div class="meal-tip">💡 Omega-3 z łososia synergistycznie z suplementem omega-3 — nie przesadzaj z dawką puszek (2× tygodniowo max dla łososia).</div>
+    </div>
+
+    <div class="meal-card" style="border-color:rgba(45,212,191,0.3)">
+      <span class="meal-flag">🌙</span>
+      <div class="meal-time">Wieczór — 19:30–20:30 (każdy dzień)</div>
+      <div class="meal-name">Nocna Regeneracja</div>
+      <div class="meal-macros">
+        <div class="m-badge mb-p"><span class="v">38g</span><span class="u"> B</span></div>
+        <div class="m-badge mb-c"><span class="v">25g</span><span class="u"> W</span></div>
+        <div class="m-badge mb-f"><span class="v">18g</span><span class="u"> T</span></div>
+        <div class="m-badge mb-k"><span class="v">~410</span><span class="u"> kcal</span></div>
+      </div>
+      <div class="meal-content">
+        <strong>200g twaróg 0%</strong> (casein — wolne trawienie całonocne)<br>
+        <strong>1–2 jaja ugotowane twardo</strong> (z meal prepu)<br>
+        <strong>Marchewka surowa</strong> lub 80g borówki<br>
+        <strong>20g orzechy mieszane</strong>
+      </div>
+      <div class="meal-tip">💡 Casein przed snem: +22% nocnej syntezy MPS vs placebo (Trommelen &amp; van Loon, 2016). Identyczny każdego wieczoru — zero decyzji.</div>
+    </div>
+  </div>
+
+  <div id="sub-nutrition-timing" class="sub-section">
+    <div class="warn-note"><strong>Czwartek — dwie sesje:</strong> AM (7:00 atletyzm) + PM (16:15 lower). Specjalny harmonogram żywieniowy.</div>
+
+    <div class="card" style="margin-bottom:6px">
+      <div class="meal-time">06:20 — PRE AM</div>
+      <div class="meal-name" style="font-size:16px">Power Oatmeal (standard)</div>
+      <div class="meal-content" style="font-size:13px;color:var(--text2)">Identyczny jak pozostałe dni. Lekki posiłek = szybkie wchłanianie przed atletyzmem. ~590 kcal.</div>
+    </div>
+    <div class="card" style="margin-bottom:6px">
+      <div class="meal-time">09:30 — POST AM</div>
+      <div class="meal-name" style="font-size:16px">Posiłek główny (rotacja) + extra węgle</div>
+      <div class="meal-content" style="font-size:13px;color:var(--text2)">Standard bowl <strong style="color:var(--text)">+ 50–80g dodatkowy batat/ziemniak</strong>. Resynteza glikogenu przed sesją PM. Minimalizuj tłuszcze (max 15g) — szybsze wchłanianie. ~720 kcal.</div>
+    </div>
+    <div class="card" style="margin-bottom:6px;border-color:rgba(255,107,53,0.4)">
+      <div class="meal-time">14:00–14:30 — PRE PM ★ (2h przed)</div>
+      <div class="meal-name" style="font-size:16px">Italian Herb Bowl (NAJWIĘKSZY posiłek tygodnia)</div>
+      <div class="meal-content" style="font-size:13px;color:var(--text2)"><strong style="color:var(--text)">170g mięso + 350g ziemniak/batat + warzywa + oliwa.</strong> ~780–820 kcal. Max glikogen = max siła. 2h okno = pełne trawienie. Minimalizuj tłuszcze przed treningiem.</div>
+    </div>
+    <div class="card" style="margin-bottom:6px">
+      <div class="meal-time">18:00 — POST PM</div>
+      <div class="meal-name" style="font-size:16px">Shake + Banan + Ziemniak</div>
+      <div class="meal-content" style="font-size:13px;color:var(--text2)">40g WPC + banan + 120g ziemniak schłodzony (skrobia oporna). ~500 kcal. Szybkie okno anaboliczne po ciężkim treningu.</div>
+    </div>
+    <div class="card">
+      <div class="meal-time">20:30 — WIECZÓR</div>
+      <div class="meal-name" style="font-size:16px">Nocna Regeneracja (lekka)</div>
+      <div class="meal-content" style="font-size:13px;color:var(--text2)">200g twaróg + borówki + orzechy. Bez dodatkowych węgli — już miałeś dużo. ~380 kcal.</div>
+    </div>
+  </div>
+
+  <div id="sub-nutrition-prep" class="sub-section">
+    <div class="sci-note"><strong>Zasada:</strong> Niedziela = główny prep (4–5 porcji mięsa, ziemniaki, batat). Środa = uzupełnienie (wołowina, świeże awokado, refresh warzyw).</div>
+
+    <div class="card card-accent" style="margin-bottom:6px">
+      <h4>Niedziela — 60 min</h4>
+      <div class="rule-row"><span class="rule-icon">01</span><span style="font-size:13px;color:var(--text2)"><strong style="color:var(--text)">Ziemniaki + batat:</strong> 2.5kg zwykłe + 1.2kg batat — gotuj w osolonej wodzie 25 min lub paro-gotuj. Schłodzić = skrobia oporna (–40% IG). Osobne pojemniki.</span></div>
+      <div class="rule-row"><span class="rule-icon">02</span><span style="font-size:13px;color:var(--text2)"><strong style="color:var(--text)">Mięso × 4–5 porcji:</strong> Kurczak/indyk 170g porcje — grilluj lub piecz z oliwą + czosnek + zioła. Schowaj osobno. Teriyaki: 1–2 porcje osobno marynowane.</span></div>
+      <div class="rule-row"><span class="rule-icon">03</span><span style="font-size:13px;color:var(--text2)"><strong style="color:var(--text)">Jaja twardo:</strong> 8–10 jaj ugotowanych — trzymaj w lodówce przez tydzień. Do posiłku wieczornego.</span></div>
+      <div class="rule-row"><span class="rule-icon">04</span><span style="font-size:13px;color:var(--text2)"><strong style="color:var(--text)">Marchewka:</strong> Worek 1kg — umyj, obierz, podziel na patyczki. Trzyma tydzień w zimnej wodzie w pojemniku.</span></div>
+    </div>
+
+    <div class="card card-accent">
+      <h4>Środa — 30 min</h4>
+      <div class="rule-row"><span class="rule-icon">01</span><span style="font-size:13px;color:var(--text2)">Wołowina mielona 300g — podsmażona z przyprawami (do Mexican Bowl środa + czwartek)</span></div>
+      <div class="rule-row"><span class="rule-icon">02</span><span style="font-size:13px;color:var(--text2)">Uzupełnij ziemniaki jeśli skończyły się. Batat — piecz nową partię (20 min przy 200°C).</span></div>
+      <div class="rule-row"><span class="rule-icon">03</span><span style="font-size:13px;color:var(--text2)">Zakupy środa: awokado (świeże na środę + czwartek), borówki mrożone, nowe kiszonki jeśli skończyły.</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── 05 SHOPPING ─── -->
+<section id="shopping" class="section">
+  <div class="sec-title">Lista <span>Zakupów</span></div>
+  <div class="sec-sub">Biedronka · raz w tygodniu · eksport do Przypomnień</div>
+
+  <div class="shop-actions">
+    <button class="shop-action-btn" onclick="checkAll(true)">✓ Zaznacz wszystko</button>
+    <button class="shop-action-btn" onclick="checkAll(false)">○ Odznacz wszystko</button>
+  </div>
+
+  <div class="shop-cat-title">🥩 BIAŁKO</div>
+  <div id="shopList">
+    <label class="shop-item-row" id="row-0"><input type="checkbox" data-name="Pierś kurczaka 1kg" onchange="rowCheck(0)"><span class="shop-item-name">Pierś kurczaka</span><span class="shop-item-detail">1 kg</span></label>
+    <label class="shop-item-row" id="row-1"><input type="checkbox" data-name="Indyk filet 500g" onchange="rowCheck(1)"><span class="shop-item-name">Indyk filet</span><span class="shop-item-detail">500 g</span></label>
+    <label class="shop-item-row" id="row-2"><input type="checkbox" data-name="Wołowina mielona 10% 500g" onchange="rowCheck(2)"><span class="shop-item-name">Wołowina mielona 10%</span><span class="shop-item-detail">500 g</span></label>
+    <label class="shop-item-row" id="row-3"><input type="checkbox" data-name="Tuńczyk w wodzie 4 puszki" onchange="rowCheck(3)"><span class="shop-item-name">Tuńczyk w wodzie</span><span class="shop-item-detail">4 puszki × 160g</span></label>
+    <label class="shop-item-row" id="row-4"><input type="checkbox" data-name="Łosoś w puszce 2 szt" onchange="rowCheck(4)"><span class="shop-item-name">Łosoś w puszce</span><span class="shop-item-detail">2 szt</span></label>
+    <label class="shop-item-row" id="row-5"><input type="checkbox" data-name="Antrykot / polędwiczka wołowa 350g (środa)" onchange="rowCheck(5)"><span class="shop-item-name">Antrykot / polędwiczka (środa)</span><span class="shop-item-detail">300–350 g</span></label>
+    <label class="shop-item-row" id="row-6"><input type="checkbox" data-name="Twaróg chudy 0% 1kg" onchange="rowCheck(6)"><span class="shop-item-name">Twaróg chudy 0%</span><span class="shop-item-detail">1 kg (2 szt × 500g)</span></label>
+    <label class="shop-item-row" id="row-7"><input type="checkbox" data-name="Skyr naturalny 400g" onchange="rowCheck(7)"><span class="shop-item-name">Skyr naturalny</span><span class="shop-item-detail">400 g (2 szt)</span></label>
+    <label class="shop-item-row" id="row-8"><input type="checkbox" data-name="Jaja L 20 szt" onchange="rowCheck(8)"><span class="shop-item-name">Jaja L</span><span class="shop-item-detail">20 szt</span></label>
+    <label class="shop-item-row" id="row-9"><input type="checkbox" data-name="WPC KFD 30g porcje (zamów online)" onchange="rowCheck(9)"><span class="shop-item-name">WPC protein (KFD)</span><span class="shop-item-detail">zamów online jeśli kończy</span></label>
+
+    <div class="shop-cat-title">🥔 WĘGLOWODANY</div>
+    <label class="shop-item-row" id="row-10"><input type="checkbox" data-name="Ziemniaki żółte 3kg" onchange="rowCheck(10)"><span class="shop-item-name">Ziemniaki żółte</span><span class="shop-item-detail">3 kg</span></label>
+    <label class="shop-item-row" id="row-11"><input type="checkbox" data-name="Bataty słodkie ziemniaki 1.5kg" onchange="rowCheck(11)"><span class="shop-item-name">Bataty (słodki ziemniak)</span><span class="shop-item-detail">1.5 kg</span></label>
+    <label class="shop-item-row" id="row-12"><input type="checkbox" data-name="Płatki owsiane instant 500g" onchange="rowCheck(12)"><span class="shop-item-name">Płatki owsiane instant</span><span class="shop-item-detail">500 g</span></label>
+    <label class="shop-item-row" id="row-13"><input type="checkbox" data-name="Banany 5 szt" onchange="rowCheck(13)"><span class="shop-item-name">Banany</span><span class="shop-item-detail">5 szt</span></label>
+    <label class="shop-item-row" id="row-14"><input type="checkbox" data-name="Borówki mrożone 500g" onchange="rowCheck(14)"><span class="shop-item-name">Borówki mrożone</span><span class="shop-item-detail">500 g</span></label>
+    <label class="shop-item-row" id="row-15"><input type="checkbox" data-name="Kiwi 6 szt" onchange="rowCheck(15)"><span class="shop-item-name">Kiwi</span><span class="shop-item-detail">6 szt</span></label>
+
+    <div class="shop-cat-title">🥑 TŁUSZCZE</div>
+    <label class="shop-item-row" id="row-16"><input type="checkbox" data-name="Oliwa extra virgin 500ml" onchange="rowCheck(16)"><span class="shop-item-name">Oliwa extra virgin</span><span class="shop-item-detail">500 ml</span></label>
+    <label class="shop-item-row" id="row-17"><input type="checkbox" data-name="Awokado 2 szt" onchange="rowCheck(17)"><span class="shop-item-name">Awokado</span><span class="shop-item-detail">2 szt (na środę)</span></label>
+    <label class="shop-item-row" id="row-18"><input type="checkbox" data-name="Orzechy mieszane 400g" onchange="rowCheck(18)"><span class="shop-item-name">Orzechy mieszane</span><span class="shop-item-detail">400 g</span></label>
+    <label class="shop-item-row" id="row-19"><input type="checkbox" data-name="Masło klarowane lub masło 250g" onchange="rowCheck(19)"><span class="shop-item-name">Masło klarowane</span><span class="shop-item-detail">250 g</span></label>
+
+    <div class="shop-cat-title">🥗 WARZYWA + FERMENTOWANE</div>
+    <label class="shop-item-row" id="row-20"><input type="checkbox" data-name="Marchewka 1kg worek" onchange="rowCheck(20)"><span class="shop-item-name">Marchewka</span><span class="shop-item-detail">1 kg (worek)</span></label>
+    <label class="shop-item-row" id="row-21"><input type="checkbox" data-name="Kapusta kiszona słoik" onchange="rowCheck(21)"><span class="shop-item-name">Kapusta kiszona</span><span class="shop-item-detail">słoik 900g</span></label>
+    <label class="shop-item-row" id="row-22"><input type="checkbox" data-name="Ogórki kiszone słoik" onchange="rowCheck(22)"><span class="shop-item-name">Ogórki kiszone</span><span class="shop-item-detail">słoik</span></label>
+
+    <div class="shop-cat-title">🧂 PRZYPRAWY + INNE</div>
+    <label class="shop-item-row" id="row-23"><input type="checkbox" data-name="Sos sojowy (do teriyaki)" onchange="rowCheck(23)"><span class="shop-item-name">Sos sojowy</span><span class="shop-item-detail">do teriyaki</span></label>
+    <label class="shop-item-row" id="row-24"><input type="checkbox" data-name="Mleko 3.2% 1L" onchange="rowCheck(24)"><span class="shop-item-name">Mleko 3.2%</span><span class="shop-item-detail">1 L</span></label>
+    <label class="shop-item-row" id="row-25"><input type="checkbox" data-name="Czosnek granulowany imbir mielony rozmaryn tymianek kumin papryczka chili" onchange="rowCheck(25)"><span class="shop-item-name">Przyprawy (zestaw)</span><span class="shop-item-detail">czosnek gran. imbir rozmaryn tymianek kumin chili</span></label>
+    <label class="shop-item-row" id="row-26"><input type="checkbox" data-name="Miód łyżeczka (do teriyaki)" onchange="rowCheck(26)"><span class="shop-item-name">Miód</span><span class="shop-item-detail">do teriyaki / owsianki</span></label>
+  </div>
+
+  <button class="share-btn" onclick="shareList()">
+    <span>📤</span> Wyślij do Przypomnień iPhone
+  </button>
+
+  <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:8px;line-height:1.7">
+    Otwiera systemowy Share Sheet → wybierz „Przypomnienia"<br>
+    lub „Notatki" → wklej jako listę zakupów
+  </div>
+</section>
+
+<!-- ─── 06 PROGRESSION ─── -->
+<section id="progression" class="section">
+  <div class="sec-title">Progresja + <span>Autoregulacja</span></div>
+  <div class="sec-sub">RPE system · fale · bench plan · suplementy</div>
+
+  <h4>SKALA RPE</h4>
+  <div class="rpe-grid">
+    <div class="rpe-blk"><span class="rpe-num" style="color:var(--green)">6</span><span class="rpe-lbl">Łatwy 4+ w zapasie</span></div>
+    <div class="rpe-blk"><span class="rpe-num" style="color:var(--green)">7</span><span class="rpe-lbl">2–3 w zapasie</span></div>
+    <div class="rpe-blk"><span class="rpe-num" style="color:var(--yellow)">7.5</span><span class="rpe-lbl">2 w zapasie</span></div>
+    <div class="rpe-blk"><span class="rpe-num" style="color:var(--yellow)">8</span><span class="rpe-lbl">1–2 w zapasie</span></div>
+    <div class="rpe-blk"><span class="rpe-num" style="color:var(--accent)">8.5</span><span class="rpe-lbl">1 w zapasie</span></div>
+    <div class="rpe-blk"><span class="rpe-num" style="color:var(--accent)">9</span><span class="rpe-lbl">0–1 rep</span></div>
+    <div class="rpe-blk"><span class="rpe-num" style="color:var(--red)">9.5</span><span class="rpe-lbl">Graniczny</span></div>
+    <div class="rpe-blk"><span class="rpe-num" style="color:var(--red)">10</span><span class="rpe-lbl">Absolutny max</span></div>
+  </div>
+
+  <hr class="divider">
+  <h3>Cykl 4 Tygodni</h3>
+  <div class="wave-grid">
+    <div class="wave-card"><div class="wave-num">Tydzień 1</div><div class="wave-type">Akumulacja</div><div class="wave-detail">RPE 7–7.5<br>4 × 8–10<br>Wzrost objętości</div><div class="wave-bar" style="width:55%"></div></div>
+    <div class="wave-card"><div class="wave-num">Tydzień 2</div><div class="wave-type">Intensyfikacja</div><div class="wave-detail">RPE 7.5–8<br>4 × 6–8<br>+2.5–5 kg</div><div class="wave-bar" style="width:72%"></div></div>
+    <div class="wave-card"><div class="wave-num">Tydzień 3</div><div class="wave-type">Realizacja</div><div class="wave-detail">RPE 8–9<br>3 × 4–5<br>Peak intensity</div><div class="wave-bar" style="width:92%"></div></div>
+    <div class="wave-card deload"><div class="wave-num">Tydzień 4</div><div class="wave-type">Deload</div><div class="wave-detail">RPE 6–7<br>–40% objętości<br>Regeneracja</div><div class="wave-bar" style="width:32%;background:var(--text3)"></div></div>
+  </div>
+
+  <hr class="divider">
+  <h3>Reguły progresji</h3>
+  <div class="g2">
+    <div class="card card-accent">
+      <h4>Kiedy zwiększać</h4>
+      <div class="rule-row"><span class="rule-icon">▶</span><span style="font-size:13px;color:var(--text2)"><strong style="color:var(--text)">RPE ≤ 6.5</strong> przy założonym 8 → +2.5–5 kg następna sesja</span></div>
+      <div class="rule-row"><span class="rule-icon">▶</span><span style="font-size:13px;color:var(--text2)"><strong style="color:var(--text)">Osiągnąłeś górny zakres reps</strong> (np. 3×8 cel, zrobiłeś 3×8) przez 2 sesje → +2.5 kg, wróć do dolnego zakresu</span></div>
+      <div class="rule-row"><span class="rule-icon">▶</span><span style="font-size:13px;color:var(--text2)"><strong style="color:var(--text)">Izolacja:</strong> dodaj serię (3→4) zamiast obciążenia gdy osiągasz górny zakres przez 2 sesje</span></div>
+    </div>
+    <div class="card card-accent">
+      <h4>Sygnały zatrzymania</h4>
+      <div class="rule-row"><span class="rule-icon" style="color:var(--green)">🟢</span><span style="font-size:13px;color:var(--text2)">Dobry sen, niska DOMS, RPE zgodne → trenuj normalnie</span></div>
+      <div class="rule-row"><span class="rule-icon" style="color:var(--yellow)">🟡</span><span style="font-size:13px;color:var(--text2)">Zmęczenie 2+ dni, wyższe RPE → –20% objętości, zachowaj obciążenie</span></div>
+      <div class="rule-row"><span class="rule-icon" style="color:var(--red)">🔴</span><span style="font-size:13px;color:var(--text2)">Ból stawów, brak snu, wysoki stres → natychmiastowy deload tydzień</span></div>
+    </div>
+  </div>
+
+  <hr class="divider">
+  <h3>Plan Bench Press — 12 Tygodni (cel: 100kg)</h3>
+  <div class="sci-note"><strong>Start: ~85–88 kg 1RM.</strong> Cel: 100 kg po 12 tygodniach. Przeliczony realnie od Twojego punktu startowego.</div>
+  <div style="overflow-x:auto;-webkit-overflow-scrolling:touch">
+  <table class="bench-table">
+    <thead><tr><th>Tyg.</th><th>Faza</th><th>Serie × Reps</th><th>Obciążenie</th><th>RPE</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td>Akumulacja A</td><td style="color:var(--accent);font-weight:700">4 × 6</td><td id="bt1">66 kg</td><td style="color:var(--green)">RPE 7</td></tr>
+      <tr><td>2</td><td>Intensyfikacja A</td><td style="color:var(--accent);font-weight:700">4 × 4</td><td id="bt2">71 kg</td><td style="color:var(--yellow)">RPE 7.5</td></tr>
+      <tr><td>3</td><td>Realizacja A</td><td style="color:var(--accent);font-weight:700">3 × 3</td><td id="bt3">77 kg</td><td style="color:var(--accent)">RPE 8.5</td></tr>
+      <tr><td>4</td><td>Deload</td><td style="color:var(--accent);font-weight:700">3 × 5</td><td id="bt4">60 kg</td><td style="color:var(--green)">RPE 6</td></tr>
+      <tr><td>5</td><td>Akumulacja B</td><td style="color:var(--accent);font-weight:700">5 × 5</td><td id="bt5">72 kg</td><td style="color:var(--yellow)">RPE 7.5</td></tr>
+      <tr><td>6</td><td>Intensyfikacja B</td><td style="color:var(--accent);font-weight:700">4 × 4</td><td id="bt6">78 kg</td><td style="color:var(--accent)">RPE 8</td></tr>
+      <tr><td>7</td><td>Realizacja B</td><td style="color:var(--accent);font-weight:700">3 × 2–3</td><td id="bt7">83 kg</td><td style="color:var(--red)">RPE 9</td></tr>
+      <tr><td>8</td><td>Deload</td><td style="color:var(--accent);font-weight:700">3 × 5</td><td>62 kg</td><td style="color:var(--green)">RPE 6</td></tr>
+      <tr><td>9–11</td><td>Szczyt</td><td style="color:var(--accent);font-weight:700">5/3/1</td><td>85→95 kg</td><td style="color:var(--red)">RPE 8.5–9</td></tr>
+      <tr><td>12</td><td>Test 1RM</td><td style="color:var(--accent);font-weight:700">1RM attempt</td><td id="bt12" style="color:var(--green);font-weight:700">~98–102 kg</td><td style="color:var(--red)">RPE 10</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <hr class="divider">
+  <h3>Suplementacja — Evidence-Based</h3>
+  <p style="font-size:13px;color:var(--text2);margin-bottom:14px;max-width:none">Masz już: kreatyna ✓, ZMB ✓, D3+K2 ✓, omega-3 ✓, elektrolity ✓. Solidna baza. Poniżej co dodać i co zostało zbędne.</p>
+
+  <div class="supp-card">
+    <span class="supp-grade grade-a">A</span>
+    <div class="supp-body"><div class="supp-name">Kreatyna monohydrat (już masz ✓)</div><div class="supp-desc">5g dziennie, stale. Rawson &amp; Volek (2003): +5–15% siła, +8% masa. Jedno z najlepiej przebadanych.</div></div>
+  </div>
+  <div class="supp-card">
+    <span class="supp-grade grade-a">A</span>
+    <div class="supp-body"><div class="supp-name">Kofeina (kawa, 2–3 filiżanki)</div><div class="supp-desc">3–6mg/kg = 235–470mg, 45–60 min przed treningiem. Cykluj 3 tyg on / 1 tyg off dla utrzymania sensytywności.</div></div>
+  </div>
+  <div class="supp-card">
+    <span class="supp-grade grade-b">B</span>
+    <div class="supp-body"><div class="supp-name">Ashwagandha KSM-66 (nowy — testosteron)</div><div class="supp-desc">600mg rano. Meta-analiza Priyanka et al. (2022): wzrost testosteronu + redukcja kortyzolu vs placebo. Dostępna w Polsce (~40zł/miesiąc). Realna różnica przy sedentarnej pracy + umiarkowanym stresie.</div></div>
+  </div>
+  <div class="supp-card" style="opacity:0.6">
+    <span class="supp-grade" style="background:rgba(90,88,85,0.3);color:var(--text3)">—</span>
+    <div class="supp-body"><div class="supp-name">Woda kokosowa — zbędna</div><div class="supp-desc">To po prostu elektrolity (600mg K+/250ml) + ~46 kcal. Skoro masz już elektrolity — zero wartości dodanej. Pij jeśli lubisz smak, nie jako suplement.</div></div>
+  </div>
+</section>
+
+</main>
+
+<!-- ═══ BOTTOM NAV ═══ -->
+<nav class="bottom-nav">
+  <button class="bnav-btn active" id="bn-overview" onclick="showSection('overview')"><span class="bnav-icon">🏠</span>Przegląd</button>
+  <button class="bnav-btn" id="bn-training" onclick="showSection('training')"><span class="bnav-icon">💪</span>Trening</button>
+  <button class="bnav-btn" id="bn-mobility" onclick="showSection('mobility')"><span class="bnav-icon">🧘</span>Mobilność</button>
+  <button class="bnav-btn" id="bn-nutrition" onclick="showSection('nutrition')"><span class="bnav-icon">🍽</span>Żywienie</button>
+  <button class="bnav-btn" id="bn-shopping" onclick="showSection('shopping')"><span class="bnav-icon">🛒</span>Zakupy</button>
+  <button class="bnav-btn" id="bn-progression" onclick="showSection('progression')"><span class="bnav-icon">📈</span>Progresja</button>
+</nav>
+
+<script>
+// ─── CONFIG ───
+const FAT_TRAIN = 77, FAT_REST = 80;
+const BENCH_PERCENTS = { work: 0.78, speed: 0.50 };
+const BENCH_PLAN = [0.78, 0.84, 0.91, 0.71, 0.85, 0.92, 0.98, null, null, null, null, 1.18];
+
+function getCfg() {
+  return {
+    weight: parseFloat(document.getElementById('cfgWeight').value) || 78,
+    bench: parseFloat(document.getElementById('cfgBench').value) || 85,
+    kcalTrain: parseInt(document.getElementById('cfgKcalTrain').value) || 2580,
+    kcalRest: parseInt(document.getElementById('cfgKcalRest').value) || 2220,
+  };
+}
+
+function recalc() {
+  const c = getCfg();
+  const protein = Math.round(c.weight * 2.0);
+  const carbsTrain = Math.round((c.kcalTrain - protein * 4 - FAT_TRAIN * 9) / 4);
+  const carbsRest = Math.round((c.kcalRest - protein * 4 - FAT_REST * 9) / 4);
+  const benchWork = Math.round(c.bench * BENCH_PERCENTS.work / 2.5) * 2.5;
+  const benchSpeed = Math.round(c.bench * BENCH_PERCENTS.speed / 2.5) * 2.5;
+
+  // Config panel results
+  set('r-protein', protein);
+  set('r-carbs-t', carbsTrain);
+  set('r-carbs-r', carbsRest);
+  set('r-bench-w', benchWork);
+  // Overview stat pill
+  set('ov-protein', protein + 'g');
+  // Nutrition macros display
+  set('n-kcal-train', c.kcalTrain);
+  set('n-kcal-rest', c.kcalRest);
+  set('n-p-t', protein); set('n-p-r', protein);
+  set('n-c-t', carbsTrain); set('n-c-r', carbsRest);
+  // Macro bars
+  pct('n-bar-p-t', Math.min(100, protein / 200 * 100));
+  pct('n-bar-c-t', Math.min(100, carbsTrain / 400 * 100));
+  pct('n-bar-c-r', Math.min(100, carbsRest / 400 * 100));
+  // Training weights
+  set('bench-work-mon', benchWork + ' kg');
+  set('bench-speed-wknd', benchSpeed + ' kg');
+  // Bench plan table
+  const bp = [0.78, 0.84, 0.91, 0.71, 0.85, 0.92, 0.98];
+  const ids = ['bt1','bt2','bt3','bt4','bt5','bt6','bt7'];
+  bp.forEach((p, i) => {
+    const el = document.getElementById(ids[i]);
+    if (el) el.textContent = (Math.round(c.bench * p / 2.5) * 2.5) + ' kg';
+  });
+  const rm12 = document.getElementById('bt12');
+  if (rm12) rm12.textContent = '~' + Math.round(c.bench * 1.15 / 2.5) * 2.5 + ' kg';
+
+  saveCfg(c);
+}
+
+function set(id, val) {
+  const el = document.getElementById(id);
+  if (el) el.textContent = val;
+}
+function pct(id, val) {
+  const el = document.getElementById(id);
+  if (el) el.style.width = val + '%';
+}
+
+function saveCfg(c) {
+  try { localStorage.setItem('psCfg', JSON.stringify(c)); } catch(e) {}
+}
+function loadCfg() {
+  try {
+    const saved = localStorage.getItem('psCfg');
+    if (!saved) return;
+    const c = JSON.parse(saved);
+    if (c.weight) document.getElementById('cfgWeight').value = c.weight;
+    if (c.bench) document.getElementById('cfgBench').value = c.bench;
+    if (c.kcalTrain) document.getElementById('cfgKcalTrain').value = c.kcalTrain;
+    if (c.kcalRest) document.getElementById('cfgKcalRest').value = c.kcalRest;
+  } catch(e) {}
+}
+
+// ─── CONFIG TOGGLE ───
+function toggleCfg() {
+  const panel = document.getElementById('cfgPanel');
+  const toggle = document.getElementById('cfgToggle');
+  const label = document.getElementById('cfgLabel');
+  const isOpen = panel.classList.contains('open');
+  panel.classList.toggle('open', !isOpen);
+  toggle.classList.toggle('open', !isOpen);
+  label.textContent = isOpen ? 'Moje dane' : 'Zamknij';
+}
+
+// ─── NAVIGATION ───
+function showSection(id) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.top-nav-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.bnav-btn').forEach(b => b.classList.remove('active'));
+  const sec = document.getElementById(id);
+  if (sec) sec.classList.add('active');
+  const topBtns = document.querySelectorAll('.top-nav-btn');
+  const ids = ['overview','training','mobility','nutrition','shopping','progression'];
+  const idx = ids.indexOf(id);
+  if (topBtns[idx]) topBtns[idx].classList.add('active');
+  const bnBtn = document.getElementById('bn-' + id);
+  if (bnBtn) bnBtn.classList.add('active');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  try { localStorage.setItem('psSection', id); } catch(e) {}
+}
+
+function showSub(section, sub) {
+  const parent = document.getElementById(section);
+  if (!parent) return;
+  parent.querySelectorAll('.sub-section').forEach(s => s.classList.remove('active'));
+  parent.querySelectorAll('.sub-btn').forEach(b => b.classList.remove('active'));
+  const target = document.getElementById('sub-' + section + '-' + sub);
+  if (target) target.classList.add('active');
+  // Find and activate the button
+  const btns = parent.querySelectorAll('.sub-btn');
+  const subIds = {
+    training: ['mon','tue','thuam','thupm','wknd'],
+    mobility: ['wed','fri','pre'],
+    nutrition: ['breakfasts','meals','timing','prep']
+  };
+  if (subIds[section]) {
+    const i = subIds[section].indexOf(sub);
+    if (btns[i]) btns[i].classList.add('active');
+  }
+}
+
+// ─── SHOPPING LIST ───
+function rowCheck(idx) {
+  const row = document.getElementById('row-' + idx);
+  if (row) row.classList.toggle('checked', row.querySelector('input').checked);
+  saveShop();
+}
+
+function checkAll(state) {
+  document.querySelectorAll('#shopList input[type=checkbox]').forEach((cb, i) => {
+    cb.checked = state;
+    const row = document.getElementById('row-' + i);
+    if (row) row.classList.toggle('checked', state);
+  });
+  saveShop();
+}
+
+function saveShop() {
+  try {
+    const states = [...document.querySelectorAll('#shopList input[type=checkbox]')].map(cb => cb.checked);
+    localStorage.setItem('psShop', JSON.stringify(states));
+  } catch(e) {}
+}
+
+function loadShop() {
+  try {
+    const saved = localStorage.getItem('psShop');
+    if (!saved) return;
+    const states = JSON.parse(saved);
+    states.forEach((checked, i) => {
+      const cb = document.querySelector('#row-' + i + ' input');
+      const row = document.getElementById('row-' + i);
+      if (cb) cb.checked = checked;
+      if (row) row.classList.toggle('checked', checked);
+    });
+  } catch(e) {}
+}
+
+function shareList() {
+  const unchecked = [...document.querySelectorAll('#shopList input[type=checkbox]')]
+    .filter(cb => !cb.checked)
+    .map(cb => '• ' + cb.dataset.name);
+  if (unchecked.length === 0) {
+    alert('Wszystkie produkty odznaczone! Odznacz czego potrzebujesz kupić.');
+    return;
+  }
+  const text = '🛒 Lista zakupów — Performance System\n\n' + unchecked.join('\n');
+  if (navigator.share) {
+    navigator.share({ title: 'Lista zakupów', text })
+      .catch(() => copyToClipboard(text));
+  } else {
+    copyToClipboard(text);
+  }
+}
+
+function copyToClipboard(text) {
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(text)
+      .then(() => alert('Skopiowano do schowka! Wklej w Przypomnienia lub Notatki.'))
+      .catch(() => alert(text));
+  } else {
+    alert(text);
+  }
+}
+
+// ─── INIT ───
+window.addEventListener('DOMContentLoaded', () => {
+  loadCfg();
+  recalc();
+  loadShop();
+  try {
+    const lastSection = localStorage.getItem('psSection');
+    if (lastSection) showSection(lastSection);
+  } catch(e) {}
+});
+</script>
+</body>
+</html>
